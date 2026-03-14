@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>AI Code Debugger</title>
+</head>
+
+<body>
+
+<h2>AI Code Debugger</h2>
+
+<textarea id="codeInput" rows="15" cols="70" placeholder="Paste your code here"></textarea>
+
+<br><br>
+
+<button onclick="debugCode()">Debug Code</button>
+
+<pre id="result"></pre>
+
+<script>
+
+async function debugCode() {
+
+    const code = document.getElementById("codeInput").value;
+
+    const response = await fetch("http://127.0.0.1:8000/debug", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ code: code })
+    });
+
+    const data = await response.json();
+
+    document.getElementById("result").textContent =
+        JSON.stringify(data, null, 2);
+}
+
+</script>
+
+</body>
+</html>
