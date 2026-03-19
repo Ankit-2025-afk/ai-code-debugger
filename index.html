@@ -4,9 +4,6 @@
 <meta charset="UTF-8">
 <title>AI Code Debugger</title>
 
-<!-- Monaco Editor -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.45.0/min/vs/loader.min.js"></script>
-
 <style>
 body {
     margin: 0;
@@ -20,25 +17,44 @@ header {
     background: #020617;
     color: #38bdf8;
     font-size: 22px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
+    text-align: center;
 }
 
-.controls {
+.container {
     display: flex;
-    gap: 10px;
+    height: 90vh;
+}
+
+.editor {
+    width: 60%;
+    padding: 20px;
+}
+
+.output {
+    width: 40%;
+    background: #020617;
+    padding: 20px;
+}
+
+textarea {
+    width: 100%;
+    height: 70%;
+    background: #1e293b;
+    color: white;
+    border: none;
+    padding: 10px;
+    font-size: 14px;
 }
 
 select, button {
-    padding: 8px 12px;
-    font-size: 14px;
-    border-radius: 6px;
-    border: none;
+    margin-top: 10px;
+    padding: 10px;
+    font-size: 16px;
 }
 
 button {
     background: #38bdf8;
+    border: none;
     cursor: pointer;
 }
 
@@ -46,116 +62,59 @@ button:hover {
     background: #0284c7;
 }
 
-.container {
-    display: flex;
-    height: calc(100vh - 60px);
-}
-
-#editor {
-    width: 65%;
-    height: 100%;
-}
-
-.output {
-    width: 35%;
-    background: #020617;
-    padding: 15px;
-    overflow-y: auto;
-}
-
-.output h3 {
-    color: #38bdf8;
-}
-
-#status {
-    font-weight: bold;
-    margin-bottom: 10px;
-}
-
-.success { color: #22c55e; }
-.error { color: #ef4444; }
-.warning { color: #facc15; }
-
 pre {
     background: #1e293b;
     padding: 10px;
     border-radius: 8px;
     white-space: pre-wrap;
 }
+
+.success { color: #22c55e; }
+.error { color: #ef4444; }
+.warning { color: #facc15; }
 </style>
 </head>
 
 <body>
 
-<header>
-    <div>🚀 AI Code Debugger</div>
-
-    <div class="controls">
-        <select id="lang">
-            <option value="python">Python</option>
-            <option value="javascript">JavaScript</option>
-            <option value="cpp">C++</option>
-            <option value="java">Java</option>
-        </select>
-
-        <button onclick="run()">Debug</button>
-    </div>
-</header>
+<header>🚀 AI Code Debugger</header>
 
 <div class="container">
-    <div id="editor"></div>
 
-    <div class="output">
-        <h3>Output</h3>
-        <div id="status"></div>
-        <pre id="result"></pre>
-    </div>
+<div class="editor">
+
+<select id="lang">
+<option value="python">Python</option>
+<option value="javascript">JavaScript</option>
+<option value="cpp">C++</option>
+<option value="java">Java</option>
+</select>
+
+<textarea id="code" placeholder="Paste your code here..."></textarea>
+
+<br>
+
+<button onclick="run()">Debug Code</button>
+
+</div>
+
+<div class="output">
+<h3>Output</h3>
+<div id="status"></div>
+<pre id="result"></pre>
+</div>
+
 </div>
 
 <script>
-let editor;
-
-// Load Monaco Editor
-require.config({
-    paths: {
-        vs: "https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.45.0/min/vs"
-    }
-});
-
-require(["vs/editor/editor.main"], function () {
-    editor = monaco.editor.create(document.getElementById("editor"), {
-        value: "# Write your code here",
-        language: "python",
-        theme: "vs-dark",
-        automaticLayout: true
-    });
-});
-
-// Change language in editor
-document.getElementById("lang").addEventListener("change", function () {
-    const lang = this.value;
-
-    const map = {
-        python: "python",
-        javascript: "javascript",
-        cpp: "cpp",
-        java: "java"
-    };
-
-    monaco.editor.setModelLanguage(editor.getModel(), map[lang]);
-});
-
-// Run debugger
 async function run() {
 
-    const code = editor.getValue();
+    const code = document.getElementById("code").value;
     const language = document.getElementById("lang").value;
 
     const res = await fetch("/debug", {
         method: "POST",
-        headers: {
-            "Content-Type": "application/json"
-        },
+        headers: {"Content-Type": "application/json"},
         body: JSON.stringify({ code, language })
     });
 
@@ -163,33 +122,32 @@ async function run() {
 
     let output = "";
 
-    // Status display
     const statusDiv = document.getElementById("status");
     statusDiv.className = "";
 
     if (data.status === "success") {
         statusDiv.innerText = "SUCCESS";
         statusDiv.classList.add("success");
-        output += data.message;
+        output = data.message;
     }
 
     if (data.status === "error") {
         statusDiv.innerText = "ERROR";
         statusDiv.classList.add("error");
+
         output += "Message: " + data.error + "\n";
-        output += "Line: " + data.line + "\n";
+        output += "Line: " + data.line + "\n\n";
+
+        if (data.auto_fix) {
+            output += "Suggested Fix:\n" + data.auto_fix + "\n\n";
+            output += "Status: " + data.fix_status;
+        }
     }
 
     if (data.status === "warning") {
         statusDiv.innerText = "WARNING";
         statusDiv.classList.add("warning");
-        output += data.message;
-    }
-
-    // Show auto-fix
-    if (data.auto_fix) {
-        output += "\n\n--- Suggested Fix ---\n";
-        output += data.auto_fix;
+        output = data.message;
     }
 
     document.getElementById("result").innerText = output;
