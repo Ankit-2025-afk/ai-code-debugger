@@ -1,158 +1,39 @@
 <!DOCTYPE html>
 <html>
 <head>
-<meta charset="UTF-8">
-<title>AI Code Debugger</title>
-
-<style>
-body {
-    margin: 0;
-    font-family: Arial;
-    background: #0f172a;
-    color: white;
-}
-
-header {
-    padding: 12px;
-    background: #020617;
-    color: #38bdf8;
-    font-size: 22px;
-    text-align: center;
-}
-
-.container {
-    display: flex;
-    height: 90vh;
-}
-
-.editor {
-    width: 60%;
-    padding: 20px;
-}
-
-.output {
-    width: 40%;
-    background: #020617;
-    padding: 20px;
-}
-
-textarea {
-    width: 100%;
-    height: 70%;
-    background: #1e293b;
-    color: white;
-    border: none;
-    padding: 10px;
-    font-size: 14px;
-}
-
-select, button {
-    margin-top: 10px;
-    padding: 10px;
-    font-size: 16px;
-}
-
-button {
-    background: #38bdf8;
-    border: none;
-    cursor: pointer;
-}
-
-button:hover {
-    background: #0284c7;
-}
-
-pre {
-    background: #1e293b;
-    padding: 10px;
-    border-radius: 8px;
-    white-space: pre-wrap;
-}
-
-.success { color: #22c55e; }
-.error { color: #ef4444; }
-.warning { color: #facc15; }
-</style>
+<title>Code Debugger</title>
 </head>
 
-<body>
+<body style="font-family: Arial; text-align:center;">
 
-<header>🚀 AI Code Debugger</header>
+<h1>Simple Code Debugger</h1>
 
-<div class="container">
+<textarea id="code" rows="10" cols="50" placeholder="Paste Python code here"></textarea>
 
-<div class="editor">
+<br><br>
 
-<select id="lang">
-<option value="python">Python</option>
-<option value="javascript">JavaScript</option>
-<option value="cpp">C++</option>
-<option value="java">Java</option>
-</select>
+<button onclick="run()">Debug</button>
 
-<textarea id="code" placeholder="Paste your code here..."></textarea>
-
-<br>
-
-<button onclick="run()">Debug Code</button>
-
-</div>
-
-<div class="output">
-<h3>Output</h3>
-<div id="status"></div>
 <pre id="result"></pre>
-</div>
-
-</div>
 
 <script>
 async function run() {
 
     const code = document.getElementById("code").value;
-    const language = document.getElementById("lang").value;
 
     const res = await fetch("/debug", {
         method: "POST",
         headers: {"Content-Type": "application/json"},
-        body: JSON.stringify({ code, language })
+        body: JSON.stringify({ code })
     });
 
     const data = await res.json();
 
-    let output = "";
-
-    const statusDiv = document.getElementById("status");
-    statusDiv.className = "";
-
-    if (data.status === "success") {
-        statusDiv.innerText = "SUCCESS";
-        statusDiv.classList.add("success");
-        output = data.message;
-    }
-
-    if (data.status === "error") {
-        statusDiv.innerText = "ERROR";
-        statusDiv.classList.add("error");
-
-        output += "Message: " + data.error + "\n";
-        output += "Line: " + data.line + "\n\n";
-
-        if (data.auto_fix) {
-            output += "Suggested Fix:\n" + data.auto_fix + "\n\n";
-            output += "Status: " + data.fix_status;
-        }
-    }
-
-    if (data.status === "warning") {
-        statusDiv.innerText = "WARNING";
-        statusDiv.classList.add("warning");
-        output = data.message;
-    }
-
-    document.getElementById("result").innerText = output;
+    document.getElementById("result").innerText =
+        JSON.stringify(data, null, 2);
 }
 </script>
 
 </body>
 </html>
+
