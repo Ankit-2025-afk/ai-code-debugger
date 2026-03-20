@@ -66,17 +66,22 @@ def detect_security(code: str):
 def get_ai_explanation(code: str):
 
     try:
-        model = genai.GenerativeModel("gemini-1.5-flash")
+        model = genai.GenerativeModel("gemini-pro")
 
-        response = model.generate_content(code)
+        prompt = f"""
+        Explain this code and identify problems:
 
-        print("AI RESPONSE:", response.text)
+        {code}
+        """
+
+        response = model.generate_content(prompt)
 
         return response.text
 
     except Exception as e:
         print("AI ERROR:", e)
         return "AI explanation not available"
+
 
 # ---------- PYTHON ----------
 def python_debug(code: str):
