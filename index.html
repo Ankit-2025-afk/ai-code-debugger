@@ -49,25 +49,34 @@ pre {
 
 <h1>🚀 AI Code Debugger</h1>
 
-<textarea id="code" placeholder="Paste your Python code here..."></textarea>
+<select id="language">
+    <option value="python">Python</option>
+    <option value="javascript">JavaScript</option>
+    <option value="cpp">C++</option>
+    <option value="java">Java</option>
+</select>
+
+<br><br>
+
+<textarea id="code" placeholder="Paste your code here..."></textarea>
 
 <br>
 
 <button onclick="run()">Debug Code</button>
 
 <h3>Output</h3>
-
 <pre id="result"></pre>
 
 <script>
 async function run() {
 
     const code = document.getElementById("code").value;
+    const language = document.getElementById("language").value;
 
     const res = await fetch("/debug", {
         method: "POST",
         headers: {"Content-Type": "application/json"},
-        body: JSON.stringify({ code })
+        body: JSON.stringify({ code, language })
     });
 
     const data = await res.json();
@@ -81,11 +90,15 @@ async function run() {
     if (data.status === "error") {
         output = "❌ ERROR\n\n";
         output += "Message: " + data.error + "\n";
-        output += "Line: " + data.line + "\n\n";
+        if (data.line) output += "Line: " + data.line + "\n\n";
 
         if (data.auto_fix) {
             output += "🔧 Suggested Fix:\n" + data.auto_fix;
         }
+    }
+
+    if (data.status === "warning") {
+        output = "⚠ WARNING\n\n" + data.message;
     }
 
     document.getElementById("result").innerText = output;
