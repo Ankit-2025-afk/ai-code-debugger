@@ -84,13 +84,18 @@ async function run() {
     let output = "";
 
     if (data.status === "success") {
-        output = "✅ SUCCESS\n\n" + data.message;
+        output = "✅ SUCCESS\n\n" + (data.message || "");
     }
 
     if (data.status === "error") {
         output = "❌ ERROR\n\n";
-        output += "Message: " + data.error + "\n";
-        if (data.line) output += "Line: " + data.line + "\n\n";
+
+        // 🔥 FIX HERE
+        output += "Message: " + (data.error || data.message || "Unknown error") + "\n";
+
+        if (data.line) {
+            output += "Line: " + data.line + "\n\n";
+        }
 
         if (data.auto_fix) {
             output += "🔧 Suggested Fix:\n" + data.auto_fix;
@@ -98,7 +103,7 @@ async function run() {
     }
 
     if (data.status === "warning") {
-        output = "⚠ WARNING\n\n" + data.message;
+        output = "⚠ WARNING\n\n" + (data.message || "");
     }
 
     document.getElementById("result").innerText = output;
