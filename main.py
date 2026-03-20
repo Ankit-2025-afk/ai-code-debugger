@@ -2,8 +2,12 @@ from fastapi import FastAPI
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
 import ast
+import google.generativeai as genai
 
 app = FastAPI()
+
+# 🔥 ADD YOUR API KEY HERE
+genai.configure(api_key="AIzaSyCuE9llM-3WJytnYJ1RjHHzeDdfgCgeHiQ")
 
 
 # ---------- INPUT ----------
@@ -58,31 +62,56 @@ def detect_security(code: str):
     return risks
 
 
+# ---------- AI EXPLANATION ----------
+def get_ai_explanation(code: str):
+
+    try:
+        model = genai.GenerativeModel("gemini-pro")
+
+        prompt = f"""
+        Analyze this code and explain problems in simple terms:
+
+        {code}
+        """
+
+        response = model.generate_content(prompt)
+
+        return response.text
+
+    except:
+        return "AI explanation not available"
+
+
 # ---------- PYTHON ----------
 def python_debug(code: str):
 
     logic = detect_logical_errors(code)
     perf = detect_performance(code)
     sec = detect_security(code)
+    explanation = get_ai_explanation(code)
 
     try:
         ast.parse(code)
+
         return {
             "status": "success",
             "syntax": "No syntax errors",
             "logic": logic,
             "performance": perf,
-            "security": sec
+            "security": sec,
+            "ai_explanation": explanation
         }
 
     except SyntaxError as e:
+
         return {
             "status": "error",
             "syntax_error": str(e),
             "line": e.lineno,
             "logic": logic,
             "performance": perf,
-            "security": sec
+            "security": sec,
+            "ai_explanation": explanation
         }
 
 
@@ -92,6 +121,7 @@ def javascript_debug(code: str):
     logic = detect_logical_errors(code)
     perf = detect_performance(code)
     sec = detect_security(code)
+    explanation = get_ai_explanation(code)
 
     if "console.log" not in code:
         return {
@@ -99,7 +129,8 @@ def javascript_debug(code: str):
             "message": "No output statement found",
             "logic": logic,
             "performance": perf,
-            "security": sec
+            "security": sec,
+            "ai_explanation": explanation
         }
 
     return {
@@ -107,7 +138,8 @@ def javascript_debug(code: str):
         "message": "JavaScript looks correct",
         "logic": logic,
         "performance": perf,
-        "security": sec
+        "security": sec,
+        "ai_explanation": explanation
     }
 
 
@@ -117,6 +149,7 @@ def cpp_debug(code: str):
     logic = detect_logical_errors(code)
     perf = detect_performance(code)
     sec = detect_security(code)
+    explanation = get_ai_explanation(code)
 
     if "#include" not in code:
         return {"status": "error", "message": "Missing #include"}
@@ -132,7 +165,8 @@ def cpp_debug(code: str):
         "message": "C++ looks correct",
         "logic": logic,
         "performance": perf,
-        "security": sec
+        "security": sec,
+        "ai_explanation": explanation
     }
 
 
@@ -142,6 +176,7 @@ def java_debug(code: str):
     logic = detect_logical_errors(code)
     perf = detect_performance(code)
     sec = detect_security(code)
+    explanation = get_ai_explanation(code)
 
     if "class" not in code:
         return {"status": "error", "message": "No class found"}
@@ -157,7 +192,8 @@ def java_debug(code: str):
         "message": "Java looks correct",
         "logic": logic,
         "performance": perf,
-        "security": sec
+        "security": sec,
+        "ai_explanation": explanation
     }
 
 

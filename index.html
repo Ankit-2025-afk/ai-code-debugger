@@ -84,33 +84,38 @@ async function run() {
 
     let output = "";
 
-    // Syntax / Message
+    // ❌ Syntax Error
     if (data.syntax_error) {
         output += "❌ Syntax Error:\n" + data.syntax_error + "\n\n";
     }
 
+    // ✅ General Message
     if (data.message) {
         output += data.message + "\n\n";
     }
 
-    // Logical Issues
+    // ⚠ Logical Issues
     if (data.logic && data.logic.length > 0) {
         output += "⚠ Logical Issues:\n" + data.logic.join("\n") + "\n\n";
     }
 
-    // Performance
+    // ⚡ Performance
     if (data.performance && data.performance.length > 0) {
         output += "⚡ Performance:\n" + data.performance.join("\n") + "\n\n";
     }
 
-    // Security
+    // 🔒 Security
     if (data.security && data.security.length > 0) {
         output += "🔒 Security:\n" + data.security.join("\n") + "\n\n";
+    }
+
+    // 🤖 AI Explanation (ADDED HERE)
+    if (data.ai_explanation) {
+        output += "🤖 AI Explanation:\n" + data.ai_explanation + "\n\n";
     }
 
     document.getElementById("result").innerText = output;
 }
 </script>
-
 </body>
 </html>
