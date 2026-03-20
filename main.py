@@ -53,11 +53,22 @@ def python_debug(code: str):
 
 # ---------- JAVASCRIPT DEBUG ----------
 def javascript_debug(code: str):
+
+    if not code.strip():
+        return {"status": "error", "message": "Empty code"}
+
+    if ";" not in code:
+        return {
+            "status": "warning",
+            "message": "Missing semicolon (;) in JavaScript"
+        }
+
     if "console.log" not in code:
         return {
             "status": "warning",
             "message": "No output statement found"
         }
+
     return {
         "status": "success",
         "message": "JavaScript looks correct"
@@ -66,11 +77,28 @@ def javascript_debug(code: str):
 
 # ---------- C++ DEBUG ----------
 def cpp_debug(code: str):
+
+    if not code.strip():
+        return {"status": "error", "message": "Empty code"}
+
     if "#include" not in code:
         return {
             "status": "error",
             "message": "Missing #include"
         }
+
+    if "main" not in code:
+        return {
+            "status": "error",
+            "message": "Missing main() function"
+        }
+
+    if ";" not in code:
+        return {
+            "status": "warning",
+            "message": "Missing semicolon (;) in C++"
+        }
+
     return {
         "status": "success",
         "message": "C++ looks correct"
@@ -79,11 +107,28 @@ def cpp_debug(code: str):
 
 # ---------- JAVA DEBUG ----------
 def java_debug(code: str):
+
+    if not code.strip():
+        return {"status": "error", "message": "Empty code"}
+
     if "class" not in code:
         return {
             "status": "error",
             "message": "No class found"
         }
+
+    if "main" not in code:
+        return {
+            "status": "warning",
+            "message": "main() method not found"
+        }
+
+    if "System.out.println" not in code:
+        return {
+            "status": "warning",
+            "message": "No output statement found"
+        }
+
     return {
         "status": "success",
         "message": "Java looks correct"
