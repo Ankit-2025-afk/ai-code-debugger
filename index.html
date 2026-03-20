@@ -1,18 +1,61 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>Code Debugger</title>
+<meta charset="UTF-8">
+<title>AI Code Debugger</title>
+
+<style>
+body {
+    font-family: Arial;
+    background: #0f172a;
+    color: white;
+    text-align: center;
+}
+
+textarea {
+    width: 80%;
+    height: 200px;
+    background: #1e293b;
+    color: white;
+    border: none;
+    padding: 10px;
+    font-size: 14px;
+}
+
+button {
+    margin-top: 10px;
+    padding: 10px 20px;
+    background: #38bdf8;
+    border: none;
+    cursor: pointer;
+}
+
+button:hover {
+    background: #0284c7;
+}
+
+pre {
+    background: #1e293b;
+    padding: 10px;
+    width: 80%;
+    margin: auto;
+    text-align: left;
+    white-space: pre-wrap;
+}
+</style>
 </head>
 
-<body style="font-family: Arial; text-align:center;">
+<body>
 
-<h1>Simple Code Debugger</h1>
+<h1>🚀 AI Code Debugger</h1>
 
-<textarea id="code" rows="10" cols="50" placeholder="Paste Python code here"></textarea>
+<textarea id="code" placeholder="Paste your Python code here..."></textarea>
 
-<br><br>
+<br>
 
-<button onclick="run()">Debug</button>
+<button onclick="run()">Debug Code</button>
+
+<h3>Output</h3>
 
 <pre id="result"></pre>
 
@@ -29,11 +72,25 @@ async function run() {
 
     const data = await res.json();
 
-    document.getElementById("result").innerText =
-        JSON.stringify(data, null, 2);
+    let output = "";
+
+    if (data.status === "success") {
+        output = "✅ SUCCESS\n\n" + data.message;
+    }
+
+    if (data.status === "error") {
+        output = "❌ ERROR\n\n";
+        output += "Message: " + data.error + "\n";
+        output += "Line: " + data.line + "\n\n";
+
+        if (data.auto_fix) {
+            output += "🔧 Suggested Fix:\n" + data.auto_fix;
+        }
+    }
+
+    document.getElementById("result").innerText = output;
 }
 </script>
 
 </body>
 </html>
-
