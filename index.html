@@ -67,6 +67,7 @@ pre {
 <h3>Output</h3>
 <pre id="result"></pre>
 
+
 <script>
 async function run() {
 
@@ -83,27 +84,28 @@ async function run() {
 
     let output = "";
 
-    if (data.status === "success") {
-        output = "✅ SUCCESS\n\n" + (data.message || "");
+    // Syntax / Message
+    if (data.syntax_error) {
+        output += "❌ Syntax Error:\n" + data.syntax_error + "\n\n";
     }
 
-    if (data.status === "error") {
-        output = "❌ ERROR\n\n";
-
-        // 🔥 FIX HERE
-        output += "Message: " + (data.error || data.message || "Unknown error") + "\n";
-
-        if (data.line) {
-            output += "Line: " + data.line + "\n\n";
-        }
-
-        if (data.auto_fix) {
-            output += "🔧 Suggested Fix:\n" + data.auto_fix;
-        }
+    if (data.message) {
+        output += data.message + "\n\n";
     }
 
-    if (data.status === "warning") {
-        output = "⚠ WARNING\n\n" + (data.message || "");
+    // Logical Issues
+    if (data.logic && data.logic.length > 0) {
+        output += "⚠ Logical Issues:\n" + data.logic.join("\n") + "\n\n";
+    }
+
+    // Performance
+    if (data.performance && data.performance.length > 0) {
+        output += "⚡ Performance:\n" + data.performance.join("\n") + "\n\n";
+    }
+
+    // Security
+    if (data.security && data.security.length > 0) {
+        output += "🔒 Security:\n" + data.security.join("\n") + "\n\n";
     }
 
     document.getElementById("result").innerText = output;
