@@ -13,6 +13,7 @@ app.add_middleware(
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+)
 
 # 🔥 ADD YOUR API KEY HERE
 genai.configure(api_key="AIzaSyCuE9llM-3WJytnYJ1RjHHzeDdfgCgeHiQ")
