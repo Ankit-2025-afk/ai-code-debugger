@@ -1,10 +1,18 @@
 from fastapi import FastAPI
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
+from fastapi.middleware.cors import CORSMiddleware
 import ast
 import google.generativeai as genai
 
 app = FastAPI()
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 
 # 🔥 ADD YOUR API KEY HERE
 genai.configure(api_key="AIzaSyCuE9llM-3WJytnYJ1RjHHzeDdfgCgeHiQ")
