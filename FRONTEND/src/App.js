@@ -9,7 +9,7 @@ function App() {
 
   const API_BASE = "https://ai-code-debugger-m9w8.onrender.com";
 
- const runDebug = async () => {
+const runDebug = async () => {
 
   const fetchWithRetry = async (url, options, retries = 3) => {
     for (let i = 0; i < retries; i++) {
@@ -19,10 +19,8 @@ function App() {
       } catch (err) {
         console.log("Retry attempt:", i + 1);
       }
-
       await new Promise(r => setTimeout(r, 5000));
     }
-
     throw new Error("Server not responding");
   };
 
@@ -42,27 +40,48 @@ function App() {
 
     const data = await res.json();
 
+    console.log("Backend Response:", data); // 🔍 debug
+
     let result = "";
+
+    // 📏 Lines
     result += "📏 Lines of Code: " + lines + "\n\n";
 
+    // ✅ Syntax handling (FIXED)
     if (data.syntax_error) {
       result += "❌ Syntax Error:\n" + data.syntax_error + "\n\n";
+    } else if (data.syntax) {
+      result += "✅ " + data.syntax + "\n\n";
     }
 
-    if (data.message) {
-      result += "✅ " + data.message + "\n\n";
-    }
-
+    // ⚠ Logic
     if (data.logic?.length > 0) {
       result += "⚠ Logical Issues:\n" + data.logic.join("\n") + "\n\n";
     }
 
+    // ⚡ Performance
     if (data.performance?.length > 0) {
       result += "⚡ Performance Issues:\n" + data.performance.join("\n") + "\n\n";
     }
 
+    // 🔒 Security
     if (data.security?.length > 0) {
       result += "🔒 Security Issues:\n" + data.security.join("\n") + "\n\n";
+    }
+
+    // 🎯 Fallback (IMPORTANT)
+    if (
+      !data.syntax_error &&
+      !data.logic?.length &&
+      !data.performance?.length &&
+      !data.security?.length
+    ) {
+      result += "✅ No major issues found\n\n";
+    }
+
+    // 🤖 AI Explanation
+    if (data.ai_explanation) {
+      result += "🤖 AI Explanation:\n" + data.ai_explanation;
     }
 
     setOutput(result);
