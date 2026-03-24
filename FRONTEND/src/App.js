@@ -54,6 +54,11 @@ if (data.syntax_error) {
   result += "✅ " + data.syntax + "\n\n";
 }
 
+// 💥 Runtime Error
+if (data.runtime_error) {
+  result += "💥 Runtime Error:\n" + data.runtime_error + "\n\n";
+}
+
 // Logic
 if (data.logic?.length > 0) {
   result += "⚠ Logical Issues:\n" + data.logic.join("\n") + "\n\n";
