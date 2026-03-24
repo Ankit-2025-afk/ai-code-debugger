@@ -7,12 +7,27 @@ import os
 import ast
 import google.generativeai as genai
 
+# Load environment variables
 load_dotenv()
 
 app = FastAPI()
 
-genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
+# ✅ FIX 1: Add CORS
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
+# ✅ FIX 2: Safe API key loading
+API_KEY = os.getenv("GEMINI_API_KEY")
+
+if API_KEY:
+    genai.configure(api_key=API_KEY)
+else:
+    print("⚠️ No API key found")
 
 
 # ---------- INPUT ----------
@@ -23,7 +38,7 @@ class CodeInput(BaseModel):
 
 @app.get("/")
 def home():
-    return FileResponse("index.html")
+    return {"message": "AI Debugger Backend Running"}
 
 
 # ---------- INTELLIGENT ANALYSIS ----------
@@ -70,14 +85,13 @@ def detect_security(code: str):
 # ---------- AI EXPLANATION ----------
 def get_ai_explanation(code: str):
 
+    if not API_KEY:
+        return "AI key not configured"
+
     try:
-        model = genai.GenerativeModel("gemini-pro")
+        model = genai.GenerativeModel("gemini-1.5-flash")
 
-        prompt = f"""
-        Explain this code and identify problems:
-
-        {code}
-        """
+        prompt = f"Explain this code and find issues:\n{code}"
 
         response = model.generate_content(prompt)
 
@@ -124,82 +138,39 @@ def python_debug(code: str):
 # ---------- JAVASCRIPT ----------
 def javascript_debug(code: str):
 
-    logic = detect_logical_errors(code)
-    perf = detect_performance(code)
-    sec = detect_security(code)
-    explanation = get_ai_explanation(code)
-
-    if "console.log" not in code:
-        return {
-            "status": "warning",
-            "message": "No output statement found",
-            "logic": logic,
-            "performance": perf,
-            "security": sec,
-            "ai_explanation": explanation
-        }
-
     return {
         "status": "success",
-        "message": "JavaScript looks correct",
-        "logic": logic,
-        "performance": perf,
-        "security": sec,
-        "ai_explanation": explanation
+        "message": "JavaScript analyzed",
+        "logic": detect_logical_errors(code),
+        "performance": detect_performance(code),
+        "security": detect_security(code),
+        "ai_explanation": get_ai_explanation(code)
     }
 
 
 # ---------- C++ ----------
 def cpp_debug(code: str):
 
-    logic = detect_logical_errors(code)
-    perf = detect_performance(code)
-    sec = detect_security(code)
-    explanation = get_ai_explanation(code)
-
-    if "#include" not in code:
-        return {"status": "error", "message": "Missing #include"}
-
-    if "main" not in code:
-        return {"status": "error", "message": "Missing main() function"}
-
-    if ";" not in code:
-        return {"status": "error", "message": "Missing semicolon (;) in C++"}
-
     return {
         "status": "success",
-        "message": "C++ looks correct",
-        "logic": logic,
-        "performance": perf,
-        "security": sec,
-        "ai_explanation": explanation
+        "message": "C++ analyzed",
+        "logic": detect_logical_errors(code),
+        "performance": detect_performance(code),
+        "security": detect_security(code),
+        "ai_explanation": get_ai_explanation(code)
     }
 
 
 # ---------- JAVA ----------
 def java_debug(code: str):
 
-    logic = detect_logical_errors(code)
-    perf = detect_performance(code)
-    sec = detect_security(code)
-    explanation = get_ai_explanation(code)
-
-    if "class" not in code:
-        return {"status": "error", "message": "No class found"}
-
-    if "main" not in code:
-        return {"status": "warning", "message": "main() method not found"}
-
-    if ";" not in code:
-        return {"status": "error", "message": "Missing semicolon (;) in Java"}
-
     return {
         "status": "success",
-        "message": "Java looks correct",
-        "logic": logic,
-        "performance": perf,
-        "security": sec,
-        "ai_explanation": explanation
+        "message": "Java analyzed",
+        "logic": detect_logical_errors(code),
+        "performance": detect_performance(code),
+        "security": detect_security(code),
+        "ai_explanation": get_ai_explanation(code)
     }
 
 
