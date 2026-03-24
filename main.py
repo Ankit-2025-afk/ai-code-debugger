@@ -1,7 +1,6 @@
 from fastapi import FastAPI
 from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.staticfiles import StaticFiles   # ✅ FIXED
 from dotenv import load_dotenv
 import os
 import ast
@@ -12,11 +11,7 @@ load_dotenv()
 
 app = FastAPI()
 
-# ✅ Serve React build
-app.mount("/", StaticFiles(directory="build", html=True), name="static")
-
-
-# ✅ CORS (safe to keep)
+# ✅ CORS
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -40,14 +35,12 @@ class CodeInput(BaseModel):
     language: str
 
 
-# ❌ REMOVE THIS (important)
-# @app.get("/")
-# def home():
-#     return {"message": "AI Debugger Backend Running"}
+@app.get("/")
+def home():
+    return {"message": "AI Debugger Backend Running"}
 
 
 # ---------- ANALYSIS ----------
-
 def detect_logical_errors(code: str):
     issues = []
 
