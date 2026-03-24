@@ -9,34 +9,29 @@ function App() {
 
   const API_BASE = "https://ai-code-debugger-m9w8.onrender.com";
 
-  const runDebug = async () => {
+ const runDebug = async () => {
 
-    const fetchWithRetry = async (url, options, retries = 3) => {
-  for (let i = 0; i < retries; i++) {
-    try {
-      const res = await fetch(url, options);
-      if (res.ok) return res;
-    } catch (err) {
-      console.log("Retry attempt:", i + 1);
+  const fetchWithRetry = async (url, options, retries = 3) => {
+    for (let i = 0; i < retries; i++) {
+      try {
+        const res = await fetch(url, options);
+        if (res.ok) return res;
+      } catch (err) {
+        console.log("Retry attempt:", i + 1);
+      }
+
+      await new Promise(r => setTimeout(r, 5000));
     }
 
-    // wait 5 seconds before retry
-    await new Promise(r => setTimeout(r, 5000));
-  }
-
-  throw new Error("Server not responding");
-};
-
-const runDebug = async () => 
+    throw new Error("Server not responding");
+  };
 
   setLoading(true);
   setOutput("⏳ Connecting to server...\n(This may take 20–40 seconds if server is sleeping)\n");
 
   try {
-
     const lines = code.split("\n").length;
 
-    // 🔥 Use retry version instead of normal fetch
     const res = await fetchWithRetry(`${API_BASE}/debug`, {
       method: "POST",
       headers: {
@@ -48,7 +43,6 @@ const runDebug = async () =>
     const data = await res.json();
 
     let result = "";
-
     result += "📏 Lines of Code: " + lines + "\n\n";
 
     if (data.syntax_error) {
@@ -59,101 +53,21 @@ const runDebug = async () =>
       result += "✅ " + data.message + "\n\n";
     }
 
-    if (data.logic && data.logic.length > 0) {
+    if (data.logic?.length > 0) {
       result += "⚠ Logical Issues:\n" + data.logic.join("\n") + "\n\n";
     }
 
-    if (data.performance && data.performance.length > 0) {
+    if (data.performance?.length > 0) {
       result += "⚡ Performance Issues:\n" + data.performance.join("\n") + "\n\n";
     }
 
-    if (data.security && data.security.length > 0) {
+    if (data.security?.length > 0) {
       result += "🔒 Security Issues:\n" + data.security.join("\n") + "\n\n";
-    }
-
-    // =========================
-    // 🔥 SCORING
-    // =========================
-
-    let logicalScore = 100;
-    let syntaxScore = 100;
-    let securityScore = 100;
-    let performanceScore = 100;
-
-    if (data.logic) logicalScore -= data.logic.length * 8;
-    if (data.syntax_error) syntaxScore -= 40;
-    if (data.security) securityScore -= data.security.length * 20;
-    if (data.performance) performanceScore -= data.performance.length * 12;
-
-    logicalScore = Math.max(logicalScore, 0);
-    syntaxScore = Math.max(syntaxScore, 0);
-    securityScore = Math.max(securityScore, 0);
-    performanceScore = Math.max(performanceScore, 0);
-
-    const overallScore = Math.round(
-      (logicalScore + syntaxScore + securityScore + performanceScore) / 4
-    );
-
-    // =========================
-    // 🔥 RESPONSE TIME
-    // =========================
-
-    let baseTime = 0.5 + lines * 0.01;
-
-    if (data.performance) baseTime += data.performance.length * 0.3;
-    if (data.logic) baseTime += data.logic.length * 0.2;
-    if (data.syntax_error) baseTime += 0.5;
-
-    const responseTime = baseTime.toFixed(2);
-
-    // =========================
-    // 🔥 LANGUAGE SCORE
-    // =========================
-
-    let langScore = 100;
-
-    langScore -= (data.logic?.length || 0) * 5;
-    langScore -= (data.security?.length || 0) * 7;
-    langScore -= (data.performance?.length || 0) * 5;
-
-    if (data.syntax_error) langScore -= 15;
-
-    langScore = Math.max(langScore, 0);
-
-    // =========================
-    // 🔥 GRADE
-    // =========================
-
-    let grade = "Excellent";
-    if (overallScore < 90) grade = "Good";
-    if (overallScore < 75) grade = "Average";
-    if (overallScore < 50) grade = "Poor";
-
-    // =========================
-    // 📊 OUTPUT
-    // =========================
-
-    result += "📊 System Performance:\n";
-    result += `Logical: ${logicalScore}%\n`;
-    result += `Syntax: ${syntaxScore}%\n`;
-    result += `Security: ${securityScore}%\n`;
-    result += `Performance: ${performanceScore}%\n\n`;
-
-    result += `⭐ Overall Score: ${overallScore}%\n`;
-    result += `🏆 Code Quality: ${grade}\n\n`;
-
-    result += `📊 ${language.toUpperCase()} Accuracy: ${langScore}%\n\n`;
-
-    result += `⏱ Response Time: ${responseTime} sec\n\n`;
-
-    if (data.ai_explanation) {
-      result += "🤖 AI Explanation:\n" + data.ai_explanation;
     }
 
     setOutput(result);
 
   } catch (error) {
-
     console.error(error);
 
     setOutput(
@@ -165,7 +79,6 @@ const runDebug = async () =>
 
   setLoading(false);
 };
-
 
   const copyOutput = () => {
     navigator.clipboard.writeText(output);
