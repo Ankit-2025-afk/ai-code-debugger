@@ -6,12 +6,16 @@ import os
 import ast
 import google.generativeai as genai
 
-# Load environment variables
+# =========================
+# 🔧 ENV SETUP
+# =========================
 load_dotenv()
 
 app = FastAPI()
 
-# ✅ CORS
+# =========================
+# 🌐 CORS
+# =========================
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -20,16 +24,19 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# ✅ API key
+# =========================
+# 🔑 API KEY
+# =========================
 API_KEY = os.getenv("GEMINI_API_KEY")
 
 if API_KEY:
     genai.configure(api_key=API_KEY)
 else:
-    print("⚠️ No API key found")
+    print("⚠️ GEMINI_API_KEY not found")
 
-
-# ---------- INPUT ----------
+# =========================
+# 📥 INPUT MODEL
+# =========================
 class CodeInput(BaseModel):
     code: str
     language: str
@@ -37,10 +44,12 @@ class CodeInput(BaseModel):
 
 @app.get("/")
 def home():
-    return {"message": "AI Debugger Backend Running"}
+    return {"message": "AI Debugger Backend Running 🚀"}
 
 
-# ---------- ANALYSIS ----------
+# =========================
+# 🧠 ANALYSIS FUNCTIONS
+# =========================
 def detect_logical_errors(code: str):
     issues = []
 
@@ -48,7 +57,7 @@ def detect_logical_errors(code: str):
         issues.append("Possible infinite loop detected")
 
     if "/ 0" in code:
-        issues.append("Division by zero error")
+        issues.append("Division by zero risk")
 
     if "if True" in code:
         issues.append("Condition always true")
@@ -80,27 +89,41 @@ def detect_security(code: str):
     return risks
 
 
-# ---------- AI ----------
+# =========================
+# 🤖 AI EXPLANATION
+# =========================
 def get_ai_explanation(code: str):
 
     if not API_KEY:
         return "AI key not configured"
 
     try:
-        model = genai.GenerativeModel("gemini-1.5-flash")
+        # ✅ FIXED MODEL
+        model = genai.GenerativeModel("gemini-1.5-flash-latest")
 
-        prompt = f"Explain this code and find issues:\n{code}"
+        prompt = f"""
+        You are an expert programmer.
+        Analyze this code and:
+        1. Explain what it does
+        2. Find bugs or issues
+        3. Suggest improvements
+
+        Code:
+        {code}
+        """
 
         response = model.generate_content(prompt)
 
-        return response.text
+        return response.text if response.text else "No AI response"
 
     except Exception as e:
         print("AI ERROR:", e)
         return "AI explanation not available"
 
 
-# ---------- PYTHON ----------
+# =========================
+# 🐍 PYTHON DEBUG
+# =========================
 def python_debug(code: str):
 
     logic = detect_logical_errors(code)
@@ -109,11 +132,20 @@ def python_debug(code: str):
     explanation = get_ai_explanation(code)
 
     try:
+        # ✅ Syntax check
         ast.parse(code)
+
+        # 🔥 Runtime execution
+        runtime_error = None
+        try:
+            exec(code, {})  # ⚠️ limited scope
+        except Exception as e:
+            runtime_error = str(e)
 
         return {
             "status": "success",
             "syntax": "No syntax errors",
+            "runtime_error": runtime_error,
             "logic": logic,
             "performance": perf,
             "security": sec,
@@ -121,7 +153,6 @@ def python_debug(code: str):
         }
 
     except SyntaxError as e:
-
         return {
             "status": "error",
             "syntax_error": str(e),
@@ -133,11 +164,13 @@ def python_debug(code: str):
         }
 
 
-# ---------- OTHER LANGUAGES ----------
+# =========================
+# 🌍 GENERIC DEBUG
+# =========================
 def generic_debug(code: str, lang: str):
     return {
         "status": "success",
-        "message": f"{lang} analyzed",
+        "message": f"{lang.upper()} analyzed",
         "logic": detect_logical_errors(code),
         "performance": detect_performance(code),
         "security": detect_security(code),
@@ -145,12 +178,17 @@ def generic_debug(code: str, lang: str):
     }
 
 
-# ---------- MAIN ----------
+# =========================
+# 🚀 MAIN ROUTE
+# =========================
 @app.post("/debug")
 def debug_code(input: CodeInput):
 
-    code = input.code
+    code = input.code.strip()
     language = input.language.lower()
+
+    if not code:
+        return {"status": "error", "message": "Code cannot be empty"}
 
     if language == "python":
         return python_debug(code)
