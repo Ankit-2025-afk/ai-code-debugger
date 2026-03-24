@@ -44,41 +44,41 @@ const runDebug = async () => {
     console.log("Backend Response:", data); // 🔍 debug
 
     let result = "";
+// 📏 Lines
+result += "📏 Lines of Code: " + lines + "\n\n";
 
-    // 📏 Lines
-    result += "📏 Lines of Code: " + lines + "\n\n";
+// Syntax
+if (data.syntax_error) {
+  result += "❌ Syntax Error:\n" + data.syntax_error + "\n\n";
+} else if (data.syntax) {
+  result += "✅ " + data.syntax + "\n\n";
+}
 
-    // ✅ Syntax handling (FIXED)
-    if (data.syntax_error) {
-      result += "❌ Syntax Error:\n" + data.syntax_error + "\n\n";
-    } else if (data.syntax) {
-      result += "✅ " + data.syntax + "\n\n";
-    }
+// Logic
+if (data.logic?.length > 0) {
+  result += "⚠ Logical Issues:\n" + data.logic.join("\n") + "\n\n";
+}
 
-    // ⚠ Logic
-    if (data.logic?.length > 0) {
-      result += "⚠ Logical Issues:\n" + data.logic.join("\n") + "\n\n";
-    }
+// Performance
+if (data.performance?.length > 0) {
+  result += "⚡ Performance Issues:\n" + data.performance.join("\n") + "\n\n";
+}
 
-    // ⚡ Performance
-    if (data.performance?.length > 0) {
-      result += "⚡ Performance Issues:\n" + data.performance.join("\n") + "\n\n";
-    }
+// Security
+if (data.security?.length > 0) {
+  result += "🔒 Security Issues:\n" + data.security.join("\n") + "\n\n";
+}
 
-    // 🔒 Security
-    if (data.security?.length > 0) {
-      result += "🔒 Security Issues:\n" + data.security.join("\n") + "\n\n";
-    }
-
-    // 🎯 Fallback (IMPORTANT)
-    if (
-      !data.syntax_error &&
-      !data.logic?.length &&
-      !data.performance?.length &&
-      !data.security?.length
-    ) {
-      result += "✅ No major issues found\n\n";
-    }
+// ✅ IMPORTANT: fallback
+if (
+  !data.syntax_error &&
+  data.syntax &&
+  !data.logic?.length &&
+  !data.performance?.length &&
+  !data.security?.length
+) {
+  result += "🎉 Your code looks clean! No issues found.\n\n";
+}
 
     // 🤖 AI Explanation
     if (data.ai_explanation) {
