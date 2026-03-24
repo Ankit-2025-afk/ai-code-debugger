@@ -10,6 +10,7 @@ function App() {
   const API_BASE = "https://ai-code-debugger-m9w8.onrender.com";
 
 const runDebug = async () => {
+  console.log("Button clicked");
 
   const fetchWithRetry = async (url, options, retries = 3) => {
     for (let i = 0; i < retries; i++) {
