@@ -90,6 +90,36 @@ def detect_security(code: str):
 
 
 # =========================
+# 📊 FEATURE EXTRACTION (ML)
+# =========================
+def extract_features(code: str):
+    return [
+        len(code.split("\n")),
+        code.count("for"),
+        code.count("while"),
+        code.count("eval"),
+        code.count("if"),
+    ]
+
+
+# =========================
+# 🤖 SIMPLE ML MODEL
+# =========================
+from sklearn.linear_model import LinearRegression
+
+X = [
+    [5, 0, 0, 0, 1],
+    [20, 2, 1, 1, 5],
+    [50, 3, 2, 1, 10]
+]
+
+y = [95, 70, 50]
+
+ml_model = LinearRegression()
+ml_model.fit(X, y)
+
+
+# =========================
 # 🤖 AI EXPLANATION
 # =========================
 def get_ai_explanation(code: str):
@@ -126,6 +156,13 @@ def get_ai_explanation(code: str):
 # =========================
 def python_debug(code: str):
 
+    # =========================
+    # 🎯 ML SCORE
+    # =========================
+    features = extract_features(code)
+    ml_score = int(ml_model.predict([features])[0])
+    ml_score = max(0, min(ml_score, 100))
+
     logic = detect_logical_errors(code)
     perf = detect_performance(code)
     sec = detect_security(code)
@@ -138,7 +175,7 @@ def python_debug(code: str):
         # 🔥 Runtime execution
         runtime_error = None
         try:
-            exec(code, {})  # ⚠️ limited scope
+            exec(code, {})
         except Exception as e:
             runtime_error = str(e)
 
@@ -149,6 +186,19 @@ def python_debug(code: str):
             "logic": logic,
             "performance": perf,
             "security": sec,
+            "ml_score": ml_score,   # ✅ ADD THIS
+            "ai_explanation": explanation
+        }
+
+    except SyntaxError as e:
+        return {
+            "status": "error",
+            "syntax_error": str(e),
+            "line": e.lineno,
+            "logic": logic,
+            "performance": perf,
+            "security": sec,
+            "ml_score": ml_score,   # ✅ ALSO HERE
             "ai_explanation": explanation
         }
 

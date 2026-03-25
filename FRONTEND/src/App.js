@@ -72,8 +72,7 @@ logicScore = Math.max(logicScore, 40);
 performanceScore = Math.max(performanceScore, 40);
 securityScore = Math.max(securityScore, 40);
 
-// 🎯 Overall score
-let overallScore = Math.round(
+let overallScore = data.ml_score ?? Math.round(
   (syntaxScore + logicScore + performanceScore + securityScore) / 4
 );
 
