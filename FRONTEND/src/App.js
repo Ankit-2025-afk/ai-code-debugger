@@ -12,6 +12,7 @@ function App() {
   const API_BASE = "https://ai-code-debugger-m9w8.onrender.com";
 
 const runDebug = async () => {
+  const startTime = Date.now();
   console.log("Button clicked");
 
   const fetchWithRetry = async (url, options, retries = 3) => {
@@ -42,13 +43,15 @@ const runDebug = async () => {
     });
 const data = await res.json();
 
+const endTime = Date.now();
+const responseTime = ((endTime - startTime) / 1000).toFixed(2);
+
 console.log("Backend Response:", data);
 
 // =====================
-// 📊 ADD THIS HERE
+// 📊 SCORING SYSTEM
 // =====================
 let syntaxScore = data.syntax_error ? 0 : 100;
-
 
 let logicScore = 100;
 if (data.logic?.length > 0) {
@@ -65,33 +68,33 @@ if (data.security?.length > 0) {
   securityScore = 70 - (data.security.length * 10);
 }
 
-// =====================
-// 🎯 OVERALL SCORE
-// =====================
+logicScore = Math.max(logicScore, 40);
+performanceScore = Math.max(performanceScore, 40);
+securityScore = Math.max(securityScore, 40);
+
+// 🎯 Overall score
 let overallScore = Math.round(
   (syntaxScore + logicScore + performanceScore + securityScore) / 4
 );
 
+// 🎯 Grade
 let grade = "";
-
 if (overallScore >= 90) grade = "A+ (Excellent)";
 else if (overallScore >= 75) grade = "A (Good)";
 else if (overallScore >= 60) grade = "B (Average)";
 else if (overallScore >= 40) grade = "C (Needs Improvement)";
 else grade = "D (Poor)";
 
-result += `📊 Grade: ${grade}\n\n`;
+// =====================
+// 🧾 RESULT START HERE
+// =====================
+let result = "";
 
-// Prevent negative values
-logicScore = Math.max(logicScore, 40);
-performanceScore = Math.max(performanceScore, 40);
-securityScore = Math.max(securityScore, 40);
-
-   let result = "";
-
-// 📏 Lines
+// 📏 Lines + Score + Grade + Time
 result += `📏 Lines of Code: ${lines}\n\n`;
-result += `🏆 Overall Code Score: ${overallScore}/100\n\n`;
+result += `🏆 Overall Code Score: ${overallScore}/100\n`;
+result += `📊 Grade: ${grade}\n`;
+result += `⏱ Response Time: ${responseTime}s\n\n`;
 
 // =====================
 // 🧩 SYNTAX ANALYSIS
