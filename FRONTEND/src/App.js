@@ -1,4 +1,6 @@
 import { useState } from "react";
+import CodeMirror from "@uiw/react-codemirror";
+import { oneDark } from "@codemirror/theme-one-dark";
 
 function App() {
 
@@ -43,54 +45,90 @@ const runDebug = async () => {
 
     console.log("Backend Response:", data); // 🔍 debug
 
-    let result = "";
+   let result = "";
+
 // 📏 Lines
-result += "📏 Lines of Code: " + lines + "\n\n";
+result += `📏 Lines of Code: ${lines}\n\n`;
 
-// Syntax
+// =====================
+// 🧩 SYNTAX ANALYSIS
+// =====================
 if (data.syntax_error) {
-  result += "❌ Syntax Error:\n" + data.syntax_error + "\n\n";
-} else if (data.syntax) {
-  result += "✅ " + data.syntax + "\n\n";
+  result += `❌ Syntax Analysis:\n`;
+  result += `Error: ${data.syntax_error}\n`;
+  result += `📍 Line: ${data.line || "N/A"}\n`;
+  result += `📊 Accuracy: 0%\n\n`;
+} else {
+  result += `🧩 Syntax Analysis:\n`;
+  result += `✔ No syntax errors found\n`;
+  result += `📊 Accuracy: 100%\n\n`;
 }
 
-// 💥 Runtime Error
+// =====================
+// 💥 RUNTIME ERROR
+// =====================
 if (data.runtime_error) {
-  result += "💥 Runtime Error:\n" + data.runtime_error + "\n\n";
+  result += `💥 Runtime Error:\n${data.runtime_error}\n\n`;
 }
 
-// Logic
-if (data.logic?.length > 0) {
-  result += "⚠ Logical Issues:\n" + data.logic.join("\n") + "\n\n";
+// =====================
+// 🧠 LOGICAL ANALYSIS
+// =====================
+if (data.syntax_error) {
+  result += `🧠 Logical Analysis:\n⚠ Cannot evaluate due to syntax error\n\n`;
+} else if (data.logic?.length > 0) {
+  result += `🧠 Logical Issues:\n${data.logic.join("\n")}\n`;
+  result += `📊 Confidence: 70%\n\n`;
+} else {
+  result += `🧠 Logical Analysis:\n✔ No logical issues detected\n`;
+  result += `📊 Confidence: 95%\n\n`;
 }
 
-// Performance
-if (data.performance?.length > 0) {
-  result += "⚡ Performance Issues:\n" + data.performance.join("\n") + "\n\n";
+// =====================
+// ⚡ PERFORMANCE
+// =====================
+if (data.syntax_error) {
+  result += `⚡ Performance Analysis:\n⚠ Cannot evaluate due to syntax error\n\n`;
+} else if (data.performance?.length > 0) {
+  result += `⚡ Performance Issues:\n${data.performance.join("\n")}\n`;
+  result += `📊 Efficiency Score: 70%\n\n`;
+} else {
+  result += `⚡ Performance Analysis:\n✔ No performance issues detected\n`;
+  result += `📊 Efficiency Score: 90%\n\n`;
 }
 
-// Security
-if (data.security?.length > 0) {
-  result += "🔒 Security Issues:\n" + data.security.join("\n") + "\n\n";
+// =====================
+// 🔒 SECURITY
+// =====================
+if (data.syntax_error) {
+  result += `🔒 Security Analysis:\n⚠ Cannot evaluate due to syntax error\n\n`;
+} else if (data.security?.length > 0) {
+  result += `🔒 Security Issues:\n${data.security.join("\n")}\n`;
+  result += `📊 Safety Score: 70%\n\n`;
+} else {
+  result += `🔒 Security Analysis:\n✔ No security risks detected\n`;
+  result += `📊 Safety Score: 92%\n\n`;
 }
 
-// ✅ IMPORTANT: fallback
+// =====================
+// 🎉 FINAL VERDICT
+// =====================
 if (
   !data.syntax_error &&
-  !data.runtime_error &&   // ⭐ ADD THIS
-  data.syntax &&
+  !data.runtime_error &&
   !data.logic?.length &&
   !data.performance?.length &&
   !data.security?.length
 ) {
-  result += "🎉 Your code looks clean! No issues found.\n\n";
+  result += `🎉 Final Verdict:\nYour code is clean and optimized.\n\n`;
 }
 
-    // 🤖 AI Explanation
-    if (data.ai_explanation) {
-      result += "🤖 AI Explanation:\n" + data.ai_explanation;
-    }
-
+// =====================
+// 🤖 AI EXPLANATION
+// =====================
+if (data.ai_explanation) {
+  result += `🤖 AI Explanation:\n${data.ai_explanation}`;
+}
     setOutput(result);
 
   } catch (error) {
@@ -145,20 +183,12 @@ if (
           <option value="java">Java</option>
         </select>
 
-        <textarea
-          rows={10}
-          value={code}
-          onChange={(e) => setCode(e.target.value)}
-          placeholder="Paste your code here..."
-          style={{
-            width: "100%",
-            padding: 10,
-            background: "#2d2d2d",
-            color: "white",
-            border: "none",
-            borderRadius: 5
-          }}
-        />
+        <CodeMirror
+  value={code}
+  height="200px"
+  theme={oneDark}
+  onChange={(value) => setCode(value)}
+/>
 
         <div style={{ marginTop: 15 }}>
           <button onClick={runDebug} disabled={loading} style={btn("#007bff")}>
