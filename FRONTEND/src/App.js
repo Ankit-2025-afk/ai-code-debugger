@@ -40,15 +40,58 @@ const runDebug = async () => {
       },
       body: JSON.stringify({ code, language })
     });
+const data = await res.json();
 
-    const data = await res.json();
+console.log("Backend Response:", data);
 
-    console.log("Backend Response:", data); // 🔍 debug
+// =====================
+// 📊 ADD THIS HERE
+// =====================
+let syntaxScore = data.syntax_error ? 0 : 100;
+
+
+let logicScore = 100;
+if (data.logic?.length > 0) {
+  logicScore = 70 - (data.logic.length * 10);
+}
+
+let performanceScore = 100;
+if (data.performance?.length > 0) {
+  performanceScore = 70 - (data.performance.length * 10);
+}
+
+let securityScore = 100;
+if (data.security?.length > 0) {
+  securityScore = 70 - (data.security.length * 10);
+}
+
+// =====================
+// 🎯 OVERALL SCORE
+// =====================
+let overallScore = Math.round(
+  (syntaxScore + logicScore + performanceScore + securityScore) / 4
+);
+
+let grade = "";
+
+if (overallScore >= 90) grade = "A+ (Excellent)";
+else if (overallScore >= 75) grade = "A (Good)";
+else if (overallScore >= 60) grade = "B (Average)";
+else if (overallScore >= 40) grade = "C (Needs Improvement)";
+else grade = "D (Poor)";
+
+result += `📊 Grade: ${grade}\n\n`;
+
+// Prevent negative values
+logicScore = Math.max(logicScore, 40);
+performanceScore = Math.max(performanceScore, 40);
+securityScore = Math.max(securityScore, 40);
 
    let result = "";
 
 // 📏 Lines
 result += `📏 Lines of Code: ${lines}\n\n`;
+result += `🏆 Overall Code Score: ${overallScore}/100\n\n`;
 
 // =====================
 // 🧩 SYNTAX ANALYSIS
@@ -78,10 +121,10 @@ if (data.syntax_error) {
   result += `🧠 Logical Analysis:\n⚠ Cannot evaluate due to syntax error\n\n`;
 } else if (data.logic?.length > 0) {
   result += `🧠 Logical Issues:\n${data.logic.join("\n")}\n`;
-  result += `📊 Confidence: 70%\n\n`;
+  result += `📊 Confidence: ${logicScore}%\n\n`;
 } else {
   result += `🧠 Logical Analysis:\n✔ No logical issues detected\n`;
-  result += `📊 Confidence: 95%\n\n`;
+  result += `📊 Confidence: ${logicScore}%\n\n`;
 }
 
 // =====================
@@ -91,10 +134,10 @@ if (data.syntax_error) {
   result += `⚡ Performance Analysis:\n⚠ Cannot evaluate due to syntax error\n\n`;
 } else if (data.performance?.length > 0) {
   result += `⚡ Performance Issues:\n${data.performance.join("\n")}\n`;
-  result += `📊 Efficiency Score: 70%\n\n`;
+  result += `📊 Efficiency Score: ${performanceScore}%\n\n`;
 } else {
   result += `⚡ Performance Analysis:\n✔ No performance issues detected\n`;
-  result += `📊 Efficiency Score: 90%\n\n`;
+  result += `📊 Efficiency Score: ${performanceScore}%\n\n`;
 }
 
 // =====================
@@ -104,10 +147,10 @@ if (data.syntax_error) {
   result += `🔒 Security Analysis:\n⚠ Cannot evaluate due to syntax error\n\n`;
 } else if (data.security?.length > 0) {
   result += `🔒 Security Issues:\n${data.security.join("\n")}\n`;
-  result += `📊 Safety Score: 70%\n\n`;
+  result += `📊 Safety Score: ${securityScore}%\n\n`;
 } else {
   result += `🔒 Security Analysis:\n✔ No security risks detected\n`;
-  result += `📊 Safety Score: 92%\n\n`;
+  result += `📊 Safety Score: ${securityScore}%\n\n`;
 }
 
 // =====================
