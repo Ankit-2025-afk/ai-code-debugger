@@ -77,6 +77,7 @@ if (data.security?.length > 0) {
 // ✅ IMPORTANT: fallback
 if (
   !data.syntax_error &&
+  !data.runtime_error &&   // ⭐ ADD THIS
   data.syntax &&
   !data.logic?.length &&
   !data.performance?.length &&
