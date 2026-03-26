@@ -90,6 +90,8 @@ function App() {
       // =====================
       let result = "";
 
+      result += `🔥 ML SCORE CHECK: ${data.ml_score}\n\n`;
+
       // 📏 Lines
       result += `📏 Lines of Code: ${lines}\n\n`;
 
