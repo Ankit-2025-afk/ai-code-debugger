@@ -202,17 +202,7 @@ def python_debug(code: str):
             "ai_explanation": explanation
         }
 
-    except SyntaxError as e:
-        return {
-            "status": "error",
-            "syntax_error": str(e),
-            "line": e.lineno,
-            "logic": logic,
-            "performance": perf,
-            "security": sec,
-            "ai_explanation": explanation
-        }
-
+    
 
 # =========================
 # 🌍 GENERIC DEBUG
