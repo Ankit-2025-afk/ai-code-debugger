@@ -1,15 +1,7 @@
 from fastapi import FastAPI
 from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
-from dotenv import load_dotenv
-import os
 import ast
-import google.generativeai as genai
-
-# =========================
-# 🔧 ENV SETUP
-# =========================
-load_dotenv()
 
 app = FastAPI()
 
@@ -25,16 +17,6 @@ app.add_middleware(
 )
 
 # =========================
-# 🔑 API KEY
-# =========================
-API_KEY = os.getenv("GEMINI_API_KEY")
-
-if API_KEY:
-    genai.configure(api_key=API_KEY)
-else:
-    print("⚠️ GEMINI_API_KEY not found")
-
-# =========================
 # 📥 INPUT MODEL
 # =========================
 class CodeInput(BaseModel):
@@ -44,111 +26,22 @@ class CodeInput(BaseModel):
 
 @app.get("/")
 def home():
-    return {"message": "AI Debugger Backend Running 🚀"}
+    return {"message": "Backend Running 🚀"}
 
 
 # =========================
-# 🧠 ANALYSIS FUNCTIONS
+# 🧠 SIMPLE ANALYSIS
 # =========================
-def detect_logical_errors(code: str):
+def detect_issues(code: str):
     issues = []
 
     if "while True" in code:
-        issues.append("Possible infinite loop detected")
+        issues.append("⚠ Infinite loop detected")
 
     if "/ 0" in code:
-        issues.append("Division by zero risk")
-
-    if "if True" in code:
-        issues.append("Condition always true")
+        issues.append("⚠ Division by zero risk")
 
     return issues
-
-
-def detect_performance(code: str):
-    suggestions = []
-
-    if code.count("for") >= 2:
-        suggestions.append("Nested loop detected (O(n²) complexity)")
-
-    if "range(len(" in code:
-        suggestions.append("Use enumerate() instead of range(len())")
-
-    return suggestions
-
-
-def detect_security(code: str):
-    risks = []
-
-    if "eval(" in code:
-        risks.append("Use of eval() is unsafe")
-
-    if "exec(" in code:
-        risks.append("Use of exec() is risky")
-
-    return risks
-
-
-# =========================
-# 📊 FEATURE EXTRACTION (ML)
-# =========================
-def extract_features(code: str):
-    return [
-        len(code.split("\n")),
-        code.count("for"),
-        code.count("while"),
-        code.count("eval"),
-        code.count("if"),
-    ]
-
-
-# =========================
-# 🤖 SIMPLE ML MODEL
-# =========================
-from sklearn.linear_model import LinearRegression
-
-X = [
-    [5, 0, 0, 0, 1],
-    [20, 2, 1, 1, 5],
-    [50, 3, 2, 1, 10]
-]
-
-y = [95, 70, 50]
-
-ml_model = LinearRegression()
-ml_model.fit(X, y)
-
-
-# =========================
-# 🤖 AI EXPLANATION
-# =========================
-def get_ai_explanation(code: str):
-
-    if not API_KEY:
-        return "AI key not configured"
-
-    try:
-        # ✅ FIXED MODEL
-        model = genai.GenerativeModel("gemini-1.5-flash-latest")
-
-        prompt = f"""
-        You are an expert programmer.
-        Analyze this code and:
-        1. Explain what it does
-        2. Find bugs or issues
-        3. Suggest improvements
-
-        Code:
-        {code}
-        """
-
-        response = model.generate_content(prompt)
-
-        return response.text if response.text else "No AI response"
-
-    except Exception as e:
-        print("AI ERROR:", e)
-        return "AI explanation not available"
 
 
 # =========================
@@ -156,23 +49,13 @@ def get_ai_explanation(code: str):
 # =========================
 def python_debug(code: str):
 
-    # =========================
-    # 🎯 ML SCORE
-    # =========================
-    features = extract_features(code)
-    ml_score = int(ml_model.predict([features])[0])
-    ml_score = max(0, min(ml_score, 100))
-
-    logic = detect_logical_errors(code)
-    perf = detect_performance(code)
-    sec = detect_security(code)
-    explanation = get_ai_explanation(code)
+    issues = detect_issues(code)
 
     try:
-        # ✅ Syntax check
+        # Syntax check
         ast.parse(code)
 
-        # 🔥 Runtime execution
+        # Runtime execution
         runtime_error = None
         try:
             exec(code, {})
@@ -183,11 +66,13 @@ def python_debug(code: str):
             "status": "success",
             "syntax": "No syntax errors",
             "runtime_error": runtime_error,
-            "logic": logic,
-            "performance": perf,
-            "security": sec,
-            "ml_score": ml_score,   # ✅ ADD THIS
-            "ai_explanation": explanation
+            "logic": issues,
+
+            # 🔥 TEST FIELD (IMPORTANT)
+            "test_message": "🔥🔥 BACKEND CHANGED SUCCESSFULLY 🔥🔥"
+
+            # 🎯 CHANGE THIS TO TEST
+            "ml_score": 88
         }
 
     except SyntaxError as e:
@@ -195,27 +80,13 @@ def python_debug(code: str):
             "status": "error",
             "syntax_error": str(e),
             "line": e.lineno,
-            "logic": logic,
-            "performance": perf,
-            "security": sec,
-            "ml_score": ml_score,   # ✅ ALSO HERE
-            "ai_explanation": explanation
+            "logic": issues,
+
+            # 🔥 TEST FIELD
+            "test_message": "Syntax error triggered ⚠",
+
+            "ml_score": 40
         }
-
-    
-
-# =========================
-# 🌍 GENERIC DEBUG
-# =========================
-def generic_debug(code: str, lang: str):
-    return {
-        "status": "success",
-        "message": f"{lang.upper()} analyzed",
-        "logic": detect_logical_errors(code),
-        "performance": detect_performance(code),
-        "security": detect_security(code),
-        "ai_explanation": get_ai_explanation(code)
-    }
 
 
 # =========================
@@ -233,4 +104,9 @@ def debug_code(input: CodeInput):
     if language == "python":
         return python_debug(code)
 
-    return generic_debug(code, language)
+    return {
+        "status": "success",
+        "message": f"{language.upper()} analyzed",
+        "test_message": "Non-python route working ✅",
+        "ml_score": 70
+    }

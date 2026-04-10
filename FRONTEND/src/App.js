@@ -12,28 +12,12 @@ function App() {
   const API_BASE = "https://ai-code-debugger-m9w8.onrender.com";
 
   const runDebug = async () => {
-    const startTime = Date.now();
-
-    const fetchWithRetry = async (url, options, retries = 3) => {
-      for (let i = 0; i < retries; i++) {
-        try {
-          const res = await fetch(url, options);
-          if (res.ok) return res;
-        } catch (err) {
-          console.log("Retry attempt:", i + 1);
-        }
-        await new Promise(r => setTimeout(r, 5000));
-      }
-      throw new Error("Server not responding");
-    };
 
     setLoading(true);
-    setOutput("⏳ Connecting to server...\n(This may take 20–40 seconds if server is sleeping)\n");
+    setOutput("⏳ Connecting to backend...\n");
 
     try {
-      const lines = code.split("\n").length;
-
-      const res = await fetchWithRetry(`${API_BASE}/debug`, {
+      const res = await fetch(`${API_BASE}/debug`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json"
@@ -43,117 +27,62 @@ function App() {
 
       const data = await res.json();
 
-      const endTime = Date.now();
-      const responseTime = ((endTime - startTime) / 1000).toFixed(2);
+      console.log("🔥 FULL BACKEND RESPONSE:", data);
 
-      console.log("Backend Response:", data);
-
-      // =====================
-      // 📊 SCORING SYSTEM
-      // =====================
-      let syntaxScore = data.syntax_error ? 0 : 100;
-
-      let logicScore = 100;
-      if (data.logic?.length > 0) {
-        logicScore = 70 - (data.logic.length * 10);
-      }
-
-      let performanceScore = 100;
-      if (data.performance?.length > 0) {
-        performanceScore = 70 - (data.performance.length * 10);
-      }
-
-      let securityScore = 100;
-      if (data.security?.length > 0) {
-        securityScore = 70 - (data.security.length * 10);
-      }
-
-      logicScore = Math.max(logicScore, 40);
-      performanceScore = Math.max(performanceScore, 40);
-      securityScore = Math.max(securityScore, 40);
-
-      // ✅ ML + fallback
-      let overallScore = data.ml_score ?? Math.round(
-        (syntaxScore + logicScore + performanceScore + securityScore) / 4
-      );
-
-      // 🎯 Grade
-      let grade = "";
-      if (overallScore >= 90) grade = "A+ (Excellent)";
-      else if (overallScore >= 75) grade = "A (Good)";
-      else if (overallScore >= 60) grade = "B (Average)";
-      else if (overallScore >= 40) grade = "C (Needs Improvement)";
-      else grade = "D (Poor)";
-
-      // =====================
-      // 🧾 OUTPUT BUILDING
-      // =====================
       let result = "";
 
-      result += `🔥 ML SCORE CHECK: ${data.ml_score}\n\n`;
-
-      // 📏 Lines
-      result += `📏 Lines of Code: ${lines}\n\n`;
-
-      // 🏆 Score
-      result += `🏆 Overall Code Score: ${overallScore}/100\n`;
-      result += `📊 Grade: ${grade}\n`;
-      result += `⏱ Response Time: ${responseTime}s\n\n`;
-
-      // 🧩 Syntax
-      if (data.syntax_error) {
-        result += `❌ Syntax Error:\n${data.syntax_error}\n\n`;
-      } else {
-        result += `🧩 Syntax Analysis:\n✔ No syntax errors found\n\n`;
+      // =========================
+      // 🧪 TEST FIELD (VERY IMPORTANT)
+      // =========================
+      if (data.test_message) {
+        result += `🧪 Test Message:\n${data.test_message}\n\n`;
       }
 
-      // 💥 Runtime
+      // =========================
+      // 🏆 ML SCORE
+      // =========================
+      if (data.ml_score !== undefined) {
+        result += `🏆 ML Score: ${data.ml_score}\n\n`;
+      }
+
+      // =========================
+      // 🧩 SYNTAX
+      // =========================
+      if (data.syntax_error) {
+        result += `❌ Syntax Error:\n${data.syntax_error}\n\n`;
+      } else if (data.syntax) {
+        result += `✅ ${data.syntax}\n\n`;
+      }
+
+      // =========================
+      // 💥 RUNTIME
+      // =========================
       if (data.runtime_error) {
         result += `💥 Runtime Error:\n${data.runtime_error}\n\n`;
       }
 
-      // 🧠 Logic
-      if (data.logic?.length > 0) {
-        result += `🧠 Logical Issues:\n${data.logic.join("\n")}\n\n`;
+      // =========================
+      // 🧠 LOGIC
+      // =========================
+      if (data.logic && data.logic.length > 0) {
+        result += `🧠 Issues:\n${data.logic.join("\n")}\n\n`;
       }
 
-      // ⚡ Performance
-      if (data.performance?.length > 0) {
-        result += `⚡ Performance Issues:\n${data.performance.join("\n")}\n\n`;
-      }
-
-      // 🔒 Security
-      if (data.security?.length > 0) {
-        result += `🔒 Security Issues:\n${data.security.join("\n")}\n\n`;
-      }
-
-      // 🤖 AI
-      if (data.ai_explanation) {
-        result += `🤖 AI Explanation:\n${data.ai_explanation}`;
-      }
+      // =========================
+      // 🧾 FULL RESPONSE (DEBUG MODE)
+      // =========================
+      result += "------------------------\n";
+      result += "📦 FULL BACKEND RESPONSE:\n";
+      result += JSON.stringify(data, null, 2);
 
       setOutput(result);
 
     } catch (error) {
       console.error(error);
-
-      setOutput(
-        "❌ Server is still waking up...\n\n" +
-        "👉 Please wait 20–40 seconds and try again.\n" +
-        "👉 This is normal for free hosting (Render)."
-      );
+      setOutput("❌ Error connecting to backend");
     }
 
     setLoading(false);
-  };
-
-  const copyOutput = () => {
-    navigator.clipboard.writeText(output);
-  };
-
-  const clearAll = () => {
-    setCode("");
-    setOutput("");
   };
 
   return (
@@ -161,11 +90,10 @@ function App() {
       backgroundColor: "#121212",
       color: "white",
       minHeight: "100vh",
-      padding: "30px",
-      fontFamily: "Arial"
+      padding: "30px"
     }}>
 
-      <h1 style={{ textAlign: "center" }}>🚀 AI Code Debugger</h1>
+      <h1 style={{ textAlign: "center" }}>🧪 Backend Test UI</h1>
 
       <div style={{
         maxWidth: "900px",
@@ -182,8 +110,6 @@ function App() {
         >
           <option value="python">Python</option>
           <option value="javascript">JavaScript</option>
-          <option value="cpp">C++</option>
-          <option value="java">Java</option>
         </select>
 
         <CodeMirror
@@ -193,19 +119,20 @@ function App() {
           onChange={(value) => setCode(value)}
         />
 
-        <div style={{ marginTop: 15 }}>
-          <button onClick={runDebug} disabled={loading} style={btn("#007bff")}>
-            {loading ? "Analyzing..." : "Debug Code"}
-          </button>
-
-          <button onClick={copyOutput} style={btn("#28a745")}>
-            Copy Output
-          </button>
-
-          <button onClick={clearAll} style={btn("#dc3545")}>
-            Clear
-          </button>
-        </div>
+        <button
+          onClick={runDebug}
+          disabled={loading}
+          style={{
+            marginTop: 15,
+            padding: "10px 20px",
+            backgroundColor: "#007bff",
+            color: "white",
+            border: "none",
+            cursor: "pointer"
+          }}
+        >
+          {loading ? "Testing..." : "Run Test"}
+        </button>
 
         <pre style={{
           marginTop: 20,
@@ -224,14 +151,4 @@ function App() {
   );
 }
 
-const btn = (color) => ({
-  padding: "10px 15px",
-  marginRight: 10,
-  backgroundColor: color,
-  color: "white",
-  border: "none",
-  cursor: "pointer",
-  borderRadius: "5px"
-});
-
-export default App;R
+export default App;
