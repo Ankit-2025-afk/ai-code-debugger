@@ -22,9 +22,7 @@ function App() {
       });
 
       const data = await res.json();
-      console.log(data);
       setOutput(data);
-
     } catch (err) {
       setOutput({ error: "Failed to connect backend" });
     }
@@ -34,7 +32,7 @@ function App() {
 
   return (
     <div style={styles.container}>
-      <h1>🚀 AI Code Debugger</h1>
+      <h1>🔥 AI Debugger FINAL UI</h1>
 
       <CodeMirror
         value={code}
@@ -55,14 +53,14 @@ function App() {
             {output.test_message}
           </Card>
 
-          {/* SCORE */}
+          {/* OVERALL SCORE */}
           {output.scores && (
             <Card title="🏆 Overall Score">
               <Progress value={output.scores.overall} />
             </Card>
           )}
 
-          {/* SCORE BREAKDOWN */}
+          {/* BREAKDOWN */}
           {output.scores && (
             <Card title="📊 Score Breakdown">
               <Progress label="Syntax" value={output.scores.syntax} />
