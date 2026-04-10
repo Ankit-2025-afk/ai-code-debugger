@@ -52,10 +52,8 @@ def python_debug(code: str):
     issues = detect_issues(code)
 
     try:
-        # Syntax check
         ast.parse(code)
 
-        # Runtime execution
         runtime_error = None
         try:
             exec(code, {})
@@ -67,11 +65,7 @@ def python_debug(code: str):
             "syntax": "No syntax errors",
             "runtime_error": runtime_error,
             "logic": issues,
-
-            # 🔥 TEST FIELD (IMPORTANT)
-            "test_message": "🔥🔥 BACKEND CHANGED SUCCESSFULLY 🔥🔥"
-
-            # 🎯 CHANGE THIS TO TEST
+            "test_message": "🔥 Backend updated successfully 🚀",
             "ml_score": 88
         }
 
@@ -81,10 +75,7 @@ def python_debug(code: str):
             "syntax_error": str(e),
             "line": e.lineno,
             "logic": issues,
-
-            # 🔥 TEST FIELD
             "test_message": "Syntax error triggered ⚠",
-
             "ml_score": 40
         }
 

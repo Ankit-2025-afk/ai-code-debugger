@@ -3,18 +3,15 @@ import CodeMirror from "@uiw/react-codemirror";
 import { oneDark } from "@codemirror/theme-one-dark";
 
 function App() {
-
   const [code, setCode] = useState("");
   const [language, setLanguage] = useState("python");
-  const [output, setOutput] = useState("");
+  const [outputData, setOutputData] = useState(null);
   const [loading, setLoading] = useState(false);
 
   const API_BASE = "https://ai-code-debugger-m9w8.onrender.com";
 
   const runDebug = async () => {
-
     setLoading(true);
-    setOutput("⏳ Connecting to backend...\n");
 
     try {
       const res = await fetch(`${API_BASE}/debug`, {
@@ -26,92 +23,37 @@ function App() {
       });
 
       const data = await res.json();
+      console.log("Backend Response:", data);
 
-      console.log("🔥 FULL BACKEND RESPONSE:", data);
-
-      let result = "";
-
-      // =========================
-      // 🧪 TEST FIELD (VERY IMPORTANT)
-      // =========================
-      if (data.test_message) {
-        result += `🧪 Test Message:\n${data.test_message}\n\n`;
-      }
-
-      // =========================
-      // 🏆 ML SCORE
-      // =========================
-      if (data.ml_score !== undefined) {
-        result += `🏆 ML Score: ${data.ml_score}\n\n`;
-      }
-
-      // =========================
-      // 🧩 SYNTAX
-      // =========================
-      if (data.syntax_error) {
-        result += `❌ Syntax Error:\n${data.syntax_error}\n\n`;
-      } else if (data.syntax) {
-        result += `✅ ${data.syntax}\n\n`;
-      }
-
-      // =========================
-      // 💥 RUNTIME
-      // =========================
-      if (data.runtime_error) {
-        result += `💥 Runtime Error:\n${data.runtime_error}\n\n`;
-      }
-
-      // =========================
-      // 🧠 LOGIC
-      // =========================
-      if (data.logic && data.logic.length > 0) {
-        result += `🧠 Issues:\n${data.logic.join("\n")}\n\n`;
-      }
-
-      // =========================
-      // 🧾 FULL RESPONSE (DEBUG MODE)
-      // =========================
-      result += "------------------------\n";
-      result += "📦 FULL BACKEND RESPONSE:\n";
-      result += JSON.stringify(data, null, 2);
-
-      setOutput(result);
+      setOutputData(data);
 
     } catch (error) {
       console.error(error);
-      setOutput("❌ Error connecting to backend");
+      setOutputData({
+        error: "❌ Failed to connect to backend"
+      });
     }
 
     setLoading(false);
   };
 
   return (
-    <div style={{
-      backgroundColor: "#121212",
-      color: "white",
-      minHeight: "100vh",
-      padding: "30px"
-    }}>
+    <div style={styles.container}>
+      <h1 style={{ textAlign: "center" }}>🚀 AI Code Debugger</h1>
 
-      <h1 style={{ textAlign: "center" }}>🧪 Backend Test UI</h1>
+      <div style={styles.box}>
 
-      <div style={{
-        maxWidth: "900px",
-        margin: "auto",
-        background: "#1e1e1e",
-        padding: "20px",
-        borderRadius: "10px"
-      }}>
-
+        {/* Language Selector */}
         <select
           value={language}
           onChange={(e) => setLanguage(e.target.value)}
-          style={{ padding: 10, marginBottom: 15, width: "100%" }}
+          style={styles.select}
         >
           <option value="python">Python</option>
           <option value="javascript">JavaScript</option>
         </select>
 
+        {/* Code Editor */}
         <CodeMirror
           value={code}
           height="200px"
@@ -119,36 +61,138 @@ function App() {
           onChange={(value) => setCode(value)}
         />
 
-        <button
-          onClick={runDebug}
-          disabled={loading}
-          style={{
-            marginTop: 15,
-            padding: "10px 20px",
-            backgroundColor: "#007bff",
-            color: "white",
-            border: "none",
-            cursor: "pointer"
-          }}
-        >
-          {loading ? "Testing..." : "Run Test"}
+        {/* Button */}
+        <button onClick={runDebug} style={styles.button}>
+          {loading ? "Analyzing..." : "Debug Code"}
         </button>
 
-        <pre style={{
-          marginTop: 20,
-          background: "#000",
-          color: "#00ffcc",
-          padding: 15,
-          borderRadius: 5,
-          minHeight: "300px",
-          whiteSpace: "pre-wrap"
-        }}>
-          {output}
-        </pre>
+        {/* OUTPUT UI */}
+        <div style={{ marginTop: 20 }}>
 
+          {/* Error */}
+          {outputData?.error && (
+            <Card title="❌ Error">
+              {outputData.error}
+            </Card>
+          )}
+
+          {/* Test Message */}
+          {outputData?.test_message && (
+            <Card title="🧪 Status">
+              {outputData.test_message}
+            </Card>
+          )}
+
+          {/* ML Score */}
+          {outputData?.ml_score !== undefined && (
+            <Card title="🏆 ML Score">
+              <Progress value={outputData.ml_score} />
+            </Card>
+          )}
+
+          {/* Syntax */}
+          <Card title="🧩 Syntax">
+            {outputData?.syntax_error
+              ? outputData.syntax_error
+              : outputData?.syntax || "No syntax errors"}
+          </Card>
+
+          {/* Runtime */}
+          {outputData?.runtime_error && (
+            <Card title="💥 Runtime Error">
+              {outputData.runtime_error}
+            </Card>
+          )}
+
+          {/* Logic */}
+          <Card title="🧠 Logic">
+            {outputData?.logic?.length > 0
+              ? outputData.logic.join(", ")
+              : "No logical issues"}
+          </Card>
+
+        </div>
       </div>
     </div>
   );
 }
+
+//////////////////////////////////////////////
+// 🎨 UI COMPONENTS
+//////////////////////////////////////////////
+
+const Card = ({ title, children }) => (
+  <div style={{
+    background: "#1e1e1e",
+    padding: "15px",
+    borderRadius: "10px",
+    marginBottom: "10px",
+    boxShadow: "0 0 10px rgba(0,0,0,0.3)"
+  }}>
+    <h3 style={{ marginBottom: 10 }}>{title}</h3>
+    <p>{children}</p>
+  </div>
+);
+
+const Progress = ({ value }) => {
+  const getColor = () => {
+    if (value >= 80) return "#28a745";
+    if (value >= 60) return "#ffc107";
+    return "#dc3545";
+  };
+
+  return (
+    <div>
+      <div style={{
+        height: "10px",
+        background: "#333",
+        borderRadius: "5px"
+      }}>
+        <div style={{
+          width: `${value}%`,
+          height: "100%",
+          background: getColor(),
+          borderRadius: "5px"
+        }} />
+      </div>
+      <p>{value}%</p>
+    </div>
+  );
+};
+
+//////////////////////////////////////////////
+// 🎨 STYLES
+//////////////////////////////////////////////
+
+const styles = {
+  container: {
+    backgroundColor: "#121212",
+    color: "white",
+    minHeight: "100vh",
+    padding: "30px",
+    fontFamily: "Arial"
+  },
+  box: {
+    maxWidth: "900px",
+    margin: "auto",
+    background: "#1e1e1e",
+    padding: "20px",
+    borderRadius: "10px"
+  },
+  select: {
+    padding: 10,
+    marginBottom: 15,
+    width: "100%"
+  },
+  button: {
+    marginTop: 15,
+    padding: "10px 20px",
+    backgroundColor: "#007bff",
+    color: "white",
+    border: "none",
+    cursor: "pointer",
+    borderRadius: "5px"
+  }
+};
 
 export default App;
