@@ -11,162 +11,139 @@ function App() {
 
   const runDebug = async () => {
     setLoading(true);
-
     try {
       const res = await fetch(`${API_BASE}/debug`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ code, language: "python" })
       });
 
       const data = await res.json();
       setOutput(data);
-    } catch (err) {
-      setOutput({ error: "Failed to connect backend" });
+    } catch {
+      setOutput({ error: "Backend error" });
     }
-
     setLoading(false);
   };
 
   return (
     <div style={styles.container}>
-      <h1>🔥 AI Debugger FINAL UI</h1>
+      <header style={styles.header}>
+        <h2>🧠 AI Code Debugger</h2>
+      </header>
 
-      <CodeMirror
-        value={code}
-        height="200px"
-        theme={oneDark}
-        onChange={(value) => setCode(value)}
-      />
+      <div style={styles.main}>
 
-      <button onClick={runDebug} style={styles.button}>
-        {loading ? "Analyzing..." : "Debug Code"}
-      </button>
+        {/* LEFT SIDE */}
+        <div style={styles.left}>
+          <h3>Code Editor</h3>
 
-      {output && (
-        <div style={styles.resultBox}>
+          <CodeMirror
+            value={code}
+            height="300px"
+            theme={oneDark}
+            onChange={(value) => setCode(value)}
+          />
 
-          {/* STATUS */}
-          <Card title="🧪 Status">
-            {output.test_message}
-          </Card>
-
-          {/* OVERALL SCORE */}
-          {output.scores && (
-            <Card title="🏆 Overall Score">
-              <Progress value={output.scores.overall} />
-            </Card>
-          )}
-
-          {/* BREAKDOWN */}
-          {output.scores && (
-            <Card title="📊 Score Breakdown">
-              <Progress label="Syntax" value={output.scores.syntax} />
-              <Progress label="Logic" value={output.scores.logic} />
-              <Progress label="Performance" value={output.scores.performance} />
-              <Progress label="Security" value={output.scores.security} />
-            </Card>
-          )}
-
-          {/* SYNTAX */}
-          <Card title="🧩 Syntax">
-            {output.syntax_error || output.syntax}
-          </Card>
-
-          {/* LOGIC */}
-          <Card title="🧠 Logic Issues">
-            {output.logic?.length ? output.logic.join(", ") : "No issues"}
-          </Card>
-
-          {/* PERFORMANCE */}
-          <Card title="⚡ Performance">
-            {output.performance?.length ? output.performance.join(", ") : "No issues"}
-          </Card>
-
-          {/* SECURITY */}
-          <Card title="🔒 Security">
-            {output.security?.length ? output.security.join(", ") : "No issues"}
-          </Card>
-
-          {/* AI */}
-          <Card title="🤖 AI Explanation">
-            {output.ai_explanation}
-          </Card>
-
+          <button style={styles.button} onClick={runDebug}>
+            {loading ? "Analyzing..." : "Debug Code"}
+          </button>
         </div>
-      )}
+
+        {/* RIGHT SIDE */}
+        <div style={styles.right}>
+          {output && (
+            <>
+              <div style={styles.scoreCard}>
+                <h3>Score</h3>
+                <h1>{output.ml_score || output.scores?.overall || 0}</h1>
+              </div>
+
+              <Section title="Errors">
+                {output.syntax_error || output.runtime_error || "No errors"}
+              </Section>
+
+              <Section title="Logical Issues">
+                {output.logic?.length ? output.logic.join(", ") : "None"}
+              </Section>
+
+              <Section title="Performance">
+                {output.performance?.length ? output.performance.join(", ") : "Good"}
+              </Section>
+
+              <Section title="Security">
+                {output.security?.length ? output.security.join(", ") : "Safe"}
+              </Section>
+
+              <Section title="AI Explanation">
+                {output.ai_explanation}
+              </Section>
+            </>
+          )}
+        </div>
+
+      </div>
     </div>
   );
 }
 
-////////////////////////////////////////
-// UI COMPONENTS
-////////////////////////////////////////
-
-const Card = ({ title, children }) => (
-  <div style={{
-    background: "#1e1e1e",
-    padding: "15px",
-    borderRadius: "10px",
-    marginTop: "10px"
-  }}>
-    <h3>{title}</h3>
+/* COMPONENT */
+const Section = ({ title, children }) => (
+  <div style={styles.card}>
+    <h4>{title}</h4>
     <p>{children}</p>
   </div>
 );
 
-const Progress = ({ value, label }) => {
-  const getColor = () => {
-    if (value >= 80) return "#28a745";
-    if (value >= 60) return "#ffc107";
-    return "#dc3545";
-  };
-
-  return (
-    <div style={{ marginBottom: 10 }}>
-      {label && <p>{label}</p>}
-      <div style={{
-        height: "10px",
-        background: "#333",
-        borderRadius: "5px"
-      }}>
-        <div style={{
-          width: `${value}%`,
-          height: "100%",
-          background: getColor(),
-          borderRadius: "5px"
-        }} />
-      </div>
-      <small>{value}%</small>
-    </div>
-  );
-};
-
-////////////////////////////////////////
-// STYLES
-////////////////////////////////////////
-
+/* STYLES */
 const styles = {
   container: {
-    backgroundColor: "#121212",
-    color: "white",
-    minHeight: "100vh",
+    fontFamily: "Arial",
+    background: "#f5f7fb",
+    minHeight: "100vh"
+  },
+  header: {
+    background: "#fff",
+    padding: "15px 30px",
+    borderBottom: "1px solid #ddd"
+  },
+  main: {
+    display: "flex",
+    gap: "20px",
+    padding: "20px"
+  },
+  left: {
+    flex: 2,
+    background: "#fff",
     padding: "20px",
-    fontFamily: "Arial"
+    borderRadius: "10px"
+  },
+  right: {
+    flex: 1,
+    display: "flex",
+    flexDirection: "column",
+    gap: "10px"
   },
   button: {
-    marginTop: 15,
-    padding: "10px 20px",
-    backgroundColor: "#007bff",
+    marginTop: "15px",
+    padding: "10px",
+    background: "#3b82f6",
     color: "white",
     border: "none",
-    cursor: "pointer",
-    borderRadius: "5px"
+    borderRadius: "5px",
+    cursor: "pointer"
   },
-  resultBox: {
-    marginTop: 20
+  card: {
+    background: "#fff",
+    padding: "15px",
+    borderRadius: "10px",
+    boxShadow: "0 2px 5px rgba(0,0,0,0.1)"
+  },
+  scoreCard: {
+    background: "#eef2ff",
+    padding: "20px",
+    borderRadius: "10px",
+    textAlign: "center"
   }
 };
 
