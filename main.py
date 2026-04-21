@@ -4,7 +4,10 @@ from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
 import os
 import ast
+import subprocess
+import tempfile
 import google.generativeai as genai
+from sklearn.linear_model import LinearRegression
 
 # =========================
 # 🔧 ENV SETUP
@@ -90,7 +93,7 @@ def detect_security(code: str):
 
 
 # =========================
-# 📊 FEATURE EXTRACTION (ML)
+# 📊 FEATURE EXTRACTION
 # =========================
 def extract_features(code: str):
     return [
@@ -105,8 +108,6 @@ def extract_features(code: str):
 # =========================
 # 🤖 SIMPLE ML MODEL
 # =========================
-from sklearn.linear_model import LinearRegression
-
 X = [
     [5, 0, 0, 0, 1],
     [20, 2, 1, 1, 5],
@@ -120,23 +121,47 @@ ml_model.fit(X, y)
 
 
 # =========================
+# 🔒 SAFE CODE EXECUTION
+# =========================
+def safe_run_python(code: str):
+    try:
+        with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as f:
+            f.write(code)
+            filename = f.name
+
+        result = subprocess.run(
+            ["python", filename],
+            capture_output=True,
+            text=True,
+            timeout=3
+        )
+
+        output = result.stdout or result.stderr
+        return output if output else "Code executed (no output)"
+
+    except Exception as e:
+        return str(e)
+
+
+# =========================
 # 🤖 AI EXPLANATION
 # =========================
 def get_ai_explanation(code: str):
 
     if not API_KEY:
-        return "AI key not configured"
+        return "AI not configured"
 
     try:
-        # ✅ FIXED MODEL
         model = genai.GenerativeModel("gemini-1.5-flash-latest")
 
         prompt = f"""
-        You are an expert programmer.
-        Analyze this code and:
-        1. Explain what it does
-        2. Find bugs or issues
-        3. Suggest improvements
+        You are a senior software engineer.
+
+        Analyze this code:
+        - Explain what it does
+        - Find bugs
+        - Suggest improvements
+        - Mention performance issues
 
         Code:
         {code}
@@ -156,9 +181,6 @@ def get_ai_explanation(code: str):
 # =========================
 def python_debug(code: str):
 
-    # =========================
-    # 🎯 ML SCORE
-    # =========================
     features = extract_features(code)
     ml_score = int(ml_model.predict([features])[0])
     ml_score = max(0, min(ml_score, 100))
@@ -169,24 +191,27 @@ def python_debug(code: str):
     explanation = get_ai_explanation(code)
 
     try:
-        # ✅ Syntax check
         ast.parse(code)
 
-        # 🔥 Runtime execution
-        runtime_error = None
-        try:
-            exec(code, {})
-        except Exception as e:
-            runtime_error = str(e)
+        runtime_output = safe_run_python(code)
 
         return {
             "status": "success",
-            "syntax": "No syntax errors",
-            "runtime_error": runtime_error,
-            "logic": logic,
-            "performance": perf,
-            "security": sec,
-            "ml_score": ml_score,   # ✅ ADD THIS
+            "score": ml_score,
+
+            "metrics": {
+                "bugs": len(logic),
+                "issues": len(perf),
+                "security": len(sec)
+            },
+
+            "suggestions": [
+                *logic,
+                *perf,
+                *sec
+            ],
+
+            "runtime_output": runtime_output,
             "ai_explanation": explanation
         }
 
@@ -195,27 +220,23 @@ def python_debug(code: str):
             "status": "error",
             "syntax_error": str(e),
             "line": e.lineno,
-            "logic": logic,
-            "performance": perf,
-            "security": sec,
-            "ml_score": ml_score,   # ✅ ALSO HERE
+
+            "score": ml_score,
+
+            "metrics": {
+                "bugs": len(logic),
+                "issues": len(perf),
+                "security": len(sec)
+            },
+
+            "suggestions": [
+                *logic,
+                *perf,
+                *sec
+            ],
+
             "ai_explanation": explanation
         }
-
-    
-
-# =========================
-# 🌍 GENERIC DEBUG
-# =========================
-def generic_debug(code: str, lang: str):
-    return {
-        "status": "success",
-        "message": f"{lang.upper()} analyzed",
-        "logic": detect_logical_errors(code),
-        "performance": detect_performance(code),
-        "security": detect_security(code),
-        "ai_explanation": get_ai_explanation(code)
-    }
 
 
 # =========================
@@ -233,4 +254,4 @@ def debug_code(input: CodeInput):
     if language == "python":
         return python_debug(code)
 
-    return generic_debug(code, language)
+    return {"status": "success", "message": f"{language} support coming soon"}
