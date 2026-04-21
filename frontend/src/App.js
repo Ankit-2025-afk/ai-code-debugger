@@ -1,3 +1,5 @@
+                                                      
+
 import { useState } from "react";
 import CodeMirror from "@uiw/react-codemirror";
 import { oneDark } from "@codemirror/theme-one-dark";
@@ -11,159 +13,162 @@ function App() {
 
   const runDebug = async () => {
     setLoading(true);
+
     try {
       const res = await fetch(`${API_BASE}/debug`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json"
+        },
         body: JSON.stringify({ code, language: "python" })
       });
 
       const data = await res.json();
-      console.log("API RESPONSE:", data); // 🔍 DEBUG
       setOutput(data);
     } catch (err) {
-      console.log(err);
-      setOutput({ error: "Backend error" });
+      setOutput({ error: "Failed to connect backend" });
     }
+
     setLoading(false);
   };
 
   return (
     <div style={styles.container}>
-      <header style={styles.header}>
-        <h2>🧠 AI Code Debugger</h2>
-      </header>
+      <h1>🔥 AI Debugger FINAL UI</h1>
 
-      <div style={styles.main}>
+      <CodeMirror
+        value={code}
+        height="200px"
+        theme={oneDark}
+        onChange={(value) => setCode(value)}
+      />
 
-        {/* LEFT SIDE */}
-        <div style={styles.left}>
-          <h3>Code Editor</h3>
+      <button onClick={runDebug} style={styles.button}>
+        {loading ? "Analyzing..." : "Debug Code"}
+      </button>
 
-          <CodeMirror
-            value={code}
-            height="300px"
-            theme={oneDark}
-            onChange={(value) => setCode(value)}
-          />
+      {output && (
+        <div style={styles.resultBox}>
 
-          <button style={styles.button} onClick={runDebug}>
-            {loading ? "⏳ Analyzing..." : "🚀 Debug Code"}
-          </button>
-        </div>
+          {/* STATUS */}
+          <Card title="🧪 Status">
+            {output.test_message}
+          </Card>
 
-        {/* RIGHT SIDE */}
-        <div style={styles.right}>
-          {output && (
-            <>
-              {/* SCORE */}
-              <div style={styles.scoreCard}>
-                <h3>Code Score</h3>
-                <h1>{output.score || 0}</h1>
-              </div>
-
-              {/* METRICS */}
-              <Section title="Metrics">
-                Bugs: {output.metrics?.bugs || 0} <br />
-                Issues: {output.metrics?.issues || 0} <br />
-                Security: {output.metrics?.security || 0}
-              </Section>
-
-              {/* OUTPUT */}
-              <Section title="Output">
-                {output.runtime_output || "No output"}
-              </Section>
-
-              {/* SUGGESTIONS */}
-              <div style={styles.card}>
-                <h4>Suggestions</h4>
-                {output.suggestions?.length ? (
-                  output.suggestions.map((item, i) => (
-                    <p key={i}>💡 {item}</p>
-                  ))
-                ) : (
-                  <p>No suggestions</p>
-                )}
-              </div>
-
-              {/* ERRORS */}
-              {output.syntax_error && (
-                <Section title="Error">
-                  {output.syntax_error}
-                </Section>
-              )}
-
-              {/* AI EXPLANATION */}
-              <Section title="AI Explanation">
-                <pre style={{ whiteSpace: "pre-wrap" }}>
-                  {output.ai_explanation}
-                </pre>
-              </Section>
-            </>
+          {/* OVERALL SCORE */}
+          {output.scores && (
+            <Card title="🏆 Overall Score">
+              <Progress value={output.scores.overall} />
+            </Card>
           )}
-        </div>
 
-      </div>
+          {/* BREAKDOWN */}
+          {output.scores && (
+            <Card title="📊 Score Breakdown">
+              <Progress label="Syntax" value={output.scores.syntax} />
+              <Progress label="Logic" value={output.scores.logic} />
+              <Progress label="Performance" value={output.scores.performance} />
+              <Progress label="Security" value={output.scores.security} />
+            </Card>
+          )}
+
+          {/* SYNTAX */}
+          <Card title="🧩 Syntax">
+            {output.syntax_error || output.syntax}
+          </Card>
+
+          {/* LOGIC */}
+          <Card title="🧠 Logic Issues">
+            {output.logic?.length ? output.logic.join(", ") : "No issues"}
+          </Card>
+
+          {/* PERFORMANCE */}
+          <Card title="⚡ Performance">
+            {output.performance?.length ? output.performance.join(", ") : "No issues"}
+          </Card>
+
+          {/* SECURITY */}
+          <Card title="🔒 Security">
+            {output.security?.length ? output.security.join(", ") : "No issues"}
+          </Card>
+
+          {/* AI */}
+          <Card title="🤖 AI Explanation">
+            {output.ai_explanation}
+          </Card>
+
+        </div>
+      )}
     </div>
   );
 }
 
-/* COMPONENT */
-const Section = ({ title, children }) => (
-  <div style={styles.card}>
-    <h4>{title}</h4>
-    <div>{children}</div>
+////////////////////////////////////////
+// UI COMPONENTS
+////////////////////////////////////////
+
+const Card = ({ title, children }) => (
+  <div style={{
+    background: "#1e1e1e",
+    padding: "15px",
+    borderRadius: "10px",
+    marginTop: "10px"
+  }}>
+    <h3>{title}</h3>
+    <p>{children}</p>
   </div>
 );
 
-/* STYLES */
+const Progress = ({ value, label }) => {
+  const getColor = () => {
+    if (value >= 80) return "#28a745";
+    if (value >= 60) return "#ffc107";
+    return "#dc3545";
+  };
+
+  return (
+    <div style={{ marginBottom: 10 }}>
+      {label && <p>{label}</p>}
+      <div style={{
+        height: "10px",
+        background: "#333",
+        borderRadius: "5px"
+      }}>
+        <div style={{
+          width: `${value}%`,
+          height: "100%",
+          background: getColor(),
+          borderRadius: "5px"
+        }} />
+      </div>
+      <small>{value}%</small>
+    </div>
+  );
+};
+
+////////////////////////////////////////
+// STYLES
+////////////////////////////////////////
+
 const styles = {
   container: {
-    fontFamily: "Arial",
-    background: "#f5f7fb",
-    minHeight: "100vh"
-  },
-  header: {
-    background: "#fff",
-    padding: "15px 30px",
-    borderBottom: "1px solid #ddd"
-  },
-  main: {
-    display: "grid",
-    gridTemplateColumns: "2fr 1fr",
-    gap: "20px",
-    padding: "20px"
-  },
-  left: {
-    background: "#fff",
+    backgroundColor: "#121212",
+    color: "white",
+    minHeight: "100vh",
     padding: "20px",
-    borderRadius: "10px"
-  },
-  right: {
-    display: "flex",
-    flexDirection: "column",
-    gap: "10px"
+    fontFamily: "Arial"
   },
   button: {
-    marginTop: "15px",
-    padding: "10px",
-    background: "#3b82f6",
+    marginTop: 15,
+    padding: "10px 20px",
+    backgroundColor: "#007bff",
     color: "white",
     border: "none",
-    borderRadius: "5px",
-    cursor: "pointer"
+    cursor: "pointer",
+    borderRadius: "5px"
   },
-  card: {
-    background: "#fff",
-    padding: "15px",
-    borderRadius: "10px",
-    boxShadow: "0 2px 5px rgba(0,0,0,0.1)"
-  },
-  scoreCard: {
-    background: "#eef2ff",
-    padding: "20px",
-    borderRadius: "10px",
-    textAlign: "center"
+  resultBox: {
+    marginTop: 20
   }
 };
 
