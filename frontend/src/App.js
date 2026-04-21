@@ -19,8 +19,10 @@ function App() {
       });
 
       const data = await res.json();
+      console.log("API RESPONSE:", data); // 🔍 DEBUG
       setOutput(data);
-    } catch {
+    } catch (err) {
+      console.log(err);
       setOutput({ error: "Backend error" });
     }
     setLoading(false);
@@ -46,7 +48,7 @@ function App() {
           />
 
           <button style={styles.button} onClick={runDebug}>
-            {loading ? "Analyzing..." : "Debug Code"}
+            {loading ? "⏳ Analyzing..." : "🚀 Debug Code"}
           </button>
         </div>
 
@@ -54,29 +56,48 @@ function App() {
         <div style={styles.right}>
           {output && (
             <>
+              {/* SCORE */}
               <div style={styles.scoreCard}>
-                <h3>Score</h3>
-                <h1>{output.ml_score || output.scores?.overall || 0}</h1>
+                <h3>Code Score</h3>
+                <h1>{output.score || 0}</h1>
               </div>
 
-              <Section title="Errors">
-                {output.syntax_error || output.runtime_error || "No errors"}
+              {/* METRICS */}
+              <Section title="Metrics">
+                Bugs: {output.metrics?.bugs || 0} <br />
+                Issues: {output.metrics?.issues || 0} <br />
+                Security: {output.metrics?.security || 0}
               </Section>
 
-              <Section title="Logical Issues">
-                {output.logic?.length ? output.logic.join(", ") : "None"}
+              {/* OUTPUT */}
+              <Section title="Output">
+                {output.runtime_output || "No output"}
               </Section>
 
-              <Section title="Performance">
-                {output.performance?.length ? output.performance.join(", ") : "Good"}
-              </Section>
+              {/* SUGGESTIONS */}
+              <div style={styles.card}>
+                <h4>Suggestions</h4>
+                {output.suggestions?.length ? (
+                  output.suggestions.map((item, i) => (
+                    <p key={i}>💡 {item}</p>
+                  ))
+                ) : (
+                  <p>No suggestions</p>
+                )}
+              </div>
 
-              <Section title="Security">
-                {output.security?.length ? output.security.join(", ") : "Safe"}
-              </Section>
+              {/* ERRORS */}
+              {output.syntax_error && (
+                <Section title="Error">
+                  {output.syntax_error}
+                </Section>
+              )}
 
+              {/* AI EXPLANATION */}
               <Section title="AI Explanation">
-                {output.ai_explanation}
+                <pre style={{ whiteSpace: "pre-wrap" }}>
+                  {output.ai_explanation}
+                </pre>
               </Section>
             </>
           )}
@@ -91,7 +112,7 @@ function App() {
 const Section = ({ title, children }) => (
   <div style={styles.card}>
     <h4>{title}</h4>
-    <p>{children}</p>
+    <div>{children}</div>
   </div>
 );
 
@@ -108,18 +129,17 @@ const styles = {
     borderBottom: "1px solid #ddd"
   },
   main: {
-    display: "flex",
+    display: "grid",
+    gridTemplateColumns: "2fr 1fr",
     gap: "20px",
     padding: "20px"
   },
   left: {
-    flex: 2,
     background: "#fff",
     padding: "20px",
     borderRadius: "10px"
   },
   right: {
-    flex: 1,
     display: "flex",
     flexDirection: "column",
     gap: "10px"
