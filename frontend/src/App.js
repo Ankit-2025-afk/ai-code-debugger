@@ -1,32 +1,36 @@
-                                                      
-
-import { useState } from "react";
-import CodeMirror from "@uiw/react-codemirror";
-import { oneDark } from "@codemirror/theme-one-dark";
+import React, { useState } from "react";
 
 function App() {
   const [code, setCode] = useState("");
-  const [output, setOutput] = useState(null);
+  const [language, setLanguage] = useState("javascript");
+  const [response, setResponse] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const API_BASE = "https://ai-code-debugger-m9w8.onrender.com";
+  const handleAnalyze = async () => {
+    if (!code.trim()) {
+      alert("Please enter some code");
+      return;
+    }
 
-  const runDebug = async () => {
     setLoading(true);
+    setResponse("");
 
     try {
-      const res = await fetch(`${API_BASE}/debug`, {
+      const res = await fetch("http://localhost:5000/analyze", {
         method: "POST",
         headers: {
           "Content-Type": "application/json"
         },
-        body: JSON.stringify({ code, language: "python" })
+        body: JSON.stringify({
+          code: code,
+          language: language
+        })
       });
 
       const data = await res.json();
-      setOutput(data);
-    } catch (err) {
-      setOutput({ error: "Failed to connect backend" });
+      setResponse(data.result);
+    } catch (error) {
+      setResponse("Error connecting to server");
     }
 
     setLoading(false);
@@ -34,141 +38,71 @@ function App() {
 
   return (
     <div style={styles.container}>
-      <h1>🔥 AI Debugger FINAL UI</h1>
+      <h1>AI Code Debugger & Reviewer</h1>
 
-      <CodeMirror
+      {/* Language Selector */}
+      <select
+        value={language}
+        onChange={(e) => setLanguage(e.target.value)}
+        style={styles.select}
+      >
+        <option value="javascript">JavaScript</option>
+        <option value="python">Python</option>
+        <option value="java">Java</option>
+        <option value="c++">C++</option>
+      </select>
+
+      {/* Code Input */}
+      <textarea
+        placeholder="Paste your code here..."
         value={code}
-        height="200px"
-        theme={oneDark}
-        onChange={(value) => setCode(value)}
+        onChange={(e) => setCode(e.target.value)}
+        style={styles.textarea}
       />
 
-      <button onClick={runDebug} style={styles.button}>
-        {loading ? "Analyzing..." : "Debug Code"}
+      {/* Button */}
+      <button onClick={handleAnalyze} style={styles.button}>
+        {loading ? "Analyzing..." : "Analyze Code"}
       </button>
 
-      {output && (
-        <div style={styles.resultBox}>
-
-          {/* STATUS */}
-          <Card title="🧪 Status">
-            {output.test_message}
-          </Card>
-
-          {/* OVERALL SCORE */}
-          {output.scores && (
-            <Card title="🏆 Overall Score">
-              <Progress value={output.scores.overall} />
-            </Card>
-          )}
-
-          {/* BREAKDOWN */}
-          {output.scores && (
-            <Card title="📊 Score Breakdown">
-              <Progress label="Syntax" value={output.scores.syntax} />
-              <Progress label="Logic" value={output.scores.logic} />
-              <Progress label="Performance" value={output.scores.performance} />
-              <Progress label="Security" value={output.scores.security} />
-            </Card>
-          )}
-
-          {/* SYNTAX */}
-          <Card title="🧩 Syntax">
-            {output.syntax_error || output.syntax}
-          </Card>
-
-          {/* LOGIC */}
-          <Card title="🧠 Logic Issues">
-            {output.logic?.length ? output.logic.join(", ") : "No issues"}
-          </Card>
-
-          {/* PERFORMANCE */}
-          <Card title="⚡ Performance">
-            {output.performance?.length ? output.performance.join(", ") : "No issues"}
-          </Card>
-
-          {/* SECURITY */}
-          <Card title="🔒 Security">
-            {output.security?.length ? output.security.join(", ") : "No issues"}
-          </Card>
-
-          {/* AI */}
-          <Card title="🤖 AI Explanation">
-            {output.ai_explanation}
-          </Card>
-
-        </div>
-      )}
+      {/* Output */}
+      <div style={styles.output}>
+        <h3>AI Response:</h3>
+        <pre>{response}</pre>
+      </div>
     </div>
   );
 }
 
-////////////////////////////////////////
-// UI COMPONENTS
-////////////////////////////////////////
-
-const Card = ({ title, children }) => (
-  <div style={{
-    background: "#1e1e1e",
-    padding: "15px",
-    borderRadius: "10px",
-    marginTop: "10px"
-  }}>
-    <h3>{title}</h3>
-    <p>{children}</p>
-  </div>
-);
-
-const Progress = ({ value, label }) => {
-  const getColor = () => {
-    if (value >= 80) return "#28a745";
-    if (value >= 60) return "#ffc107";
-    return "#dc3545";
-  };
-
-  return (
-    <div style={{ marginBottom: 10 }}>
-      {label && <p>{label}</p>}
-      <div style={{
-        height: "10px",
-        background: "#333",
-        borderRadius: "5px"
-      }}>
-        <div style={{
-          width: `${value}%`,
-          height: "100%",
-          background: getColor(),
-          borderRadius: "5px"
-        }} />
-      </div>
-      <small>{value}%</small>
-    </div>
-  );
-};
-
-////////////////////////////////////////
-// STYLES
-////////////////////////////////////////
-
 const styles = {
   container: {
-    backgroundColor: "#121212",
-    color: "white",
-    minHeight: "100vh",
+    maxWidth: "800px",
+    margin: "auto",
     padding: "20px",
     fontFamily: "Arial"
   },
+  textarea: {
+    width: "100%",
+    height: "200px",
+    marginTop: "10px",
+    padding: "10px",
+    fontSize: "14px"
+  },
   button: {
-    marginTop: 15,
+    marginTop: "10px",
     padding: "10px 20px",
-    backgroundColor: "#007bff",
-    color: "white",
-    border: "none",
-    cursor: "pointer",
+    fontSize: "16px",
+    cursor: "pointer"
+  },
+  output: {
+    marginTop: "20px",
+    background: "#f4f4f4",
+    padding: "10px",
     borderRadius: "5px"
   },
-  resultBox: {
-    marginTop: 20
+  select: {
+    padding: "8px",
+    marginBottom: "10px"
   }
 };
 
