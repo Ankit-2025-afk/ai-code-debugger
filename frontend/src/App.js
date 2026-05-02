@@ -2,7 +2,7 @@ import React, { useState } from "react";
 
 function App() {
   const [code, setCode] = useState("");
-  const [language, setLanguage] = useState("javascript");
+  const [language, setLanguage] = useState("python");
   const [response, setResponse] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -16,7 +16,7 @@ function App() {
     setResponse("");
 
     try {
-      const res = await fetch("http://localhost:5000/analyze", {
+      const res = await fetch("http://localhost:8000/debug", {
         method: "POST",
         headers: {
           "Content-Type": "application/json"
@@ -28,7 +28,7 @@ function App() {
       });
 
       const data = await res.json();
-      setResponse(data.result);
+      setResponse(JSON.stringify(data, null, 2));
     } catch (error) {
       setResponse("Error connecting to server");
     }
