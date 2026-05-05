@@ -1,5 +1,3 @@
-                                                
-
 from fastapi import FastAPI
 from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
@@ -21,12 +19,9 @@ app.add_middleware(
 )
 
 # =========================
-# 🔑 AI KEY (optional)
+# 🔑 API KEY
 # =========================
-API_KEY = os.getenv("GEMINI_API_KEY")
-
-if API_KEY:
-    genai.configure(api_key=API_KEY)
+genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
 
 # =========================
 # 📥 INPUT MODEL
@@ -38,173 +33,89 @@ class CodeInput(BaseModel):
 
 @app.get("/")
 def home():
-    return {"message": "AI Debugger Backend Running 🚀"}
+    return {"message": "Backend Running 🚀"}
 
 
 # =========================
-# 🧠 LOGIC DETECTION
-# =========================
-def detect_logic(code):
-    issues = []
-
-    if "while True" in code:
-        issues.append("⚠ Possible infinite loop")
-
-    if "if True" in code:
-        issues.append("⚠ Condition always true")
-
-    if "/ 0" in code:
-        issues.append("⚠ Division by zero risk")
-
-    if "==" in code and "if" not in code:
-        issues.append("⚠ Suspicious comparison without condition")
-
-    return issues
-
-
-# =========================
-# ⚡ PERFORMANCE
-# =========================
-def detect_performance(code):
-    issues = []
-
-    if code.count("for") >= 2:
-        issues.append("⚠ Nested loops → O(n²) complexity")
-
-    if "range(len(" in code:
-        issues.append("⚠ Use enumerate() instead of range(len())")
-
-    return issues
-
-
-# =========================
-# 🔒 SECURITY
-# =========================
-def detect_security(code):
-    issues = []
-
-    if "eval(" in code:
-        issues.append("❌ eval() is unsafe")
-
-    if "exec(" in code:
-        issues.append("❌ exec() is risky")
-
-    return issues
-
-
-# =========================
-# 🤖 AI EXPLANATION
-# =========================
-def get_ai_explanation(code):
-    if not API_KEY:
-        return "AI not configured"
-
-    try:
-        model = genai.GenerativeModel("gemini-1.5-flash-latest")
-
-        prompt = f"""
-        Analyze this code:
-        - Explain what it does
-        - Find issues
-        - Suggest improvements
-
-        Code:
-        {code}
-        """
-
-        response = model.generate_content(prompt)
-        return response.text if response.text else "No AI response"
-
-    except Exception:
-        return "AI failed"
-
-
-# =========================
-# 📊 SCORING SYSTEM
-# =========================
-def calculate_score(logic, performance, security, syntax_error):
-    syntax_score = 0 if syntax_error else 100
-    logic_score = max(100 - len(logic)*10, 40)
-    perf_score = max(100 - len(performance)*10, 40)
-    sec_score = max(100 - len(security)*10, 40)
-
-    overall = (syntax_score + logic_score + perf_score + sec_score) // 4
-
-    return {
-        "overall": overall,
-        "syntax": syntax_score,
-        "logic": logic_score,
-        "performance": perf_score,
-        "security": sec_score
-    }
-
-
-# =========================
-# 🐍 PYTHON DEBUG
+# 🧠 DEBUG FUNCTION
 # =========================
 def python_debug(code):
+    logic = []
+    performance = []
+    security = []
 
-    logic = detect_logic(code)
-    perf = detect_performance(code)
-    sec = detect_security(code)
+    # -------- LOGIC --------
+    if "while True" in code:
+        logic.append("⚠ Possible infinite loop")
+
+    # -------- PERFORMANCE --------
+    if code.count("for") >= 2:
+        performance.append("⚠ Nested loops → O(n²)")
+
+    # -------- SECURITY --------
+    if "eval(" in code:
+        security.append("❌ eval() is unsafe")
 
     try:
+        # -------- SYNTAX CHECK --------
         ast.parse(code)
 
+        # -------- RUNTIME CHECK --------
         runtime_error = None
         try:
-            exec(code, {})
+            compiled_code = compile(code, "<string>", "exec")
+            exec(compiled_code, {"__builtins__": {}})
         except Exception as e:
-            runtime_error = str(e)
+            runtime_error = f"{type(e).__name__}: {str(e)}"
 
-        scores = calculate_score(logic, perf, sec, False)
+        # -------- AI ANALYSIS --------
+        try:
+            model = genai.GenerativeModel("models/gemini-flash-latest")
 
+            prompt = f"""
+Analyze this Python code:
+- Explain what it does
+- Find errors
+- Suggest improvements
+
+Code:
+{code}
+"""
+
+            ai_response = model.generate_content(prompt)
+            ai_text = ai_response.text if ai_response.text else "No AI response"
+
+        except Exception as e:
+            ai_text = f"AI failed: {str(e)}"
+
+        # -------- RESPONSE --------
         return {
             "status": "success",
             "syntax": "No syntax errors",
             "runtime_error": runtime_error,
             "logic": logic,
-            "performance": perf,
-            "security": sec,
-            "scores": scores,
-            "test_message": "🔥 AI Backend Upgraded Successfully",
-            "ai_explanation": get_ai_explanation(code)
+            "performance": performance,
+            "security": security,
+            "scores": {
+                "overall": 90 if not runtime_error else 60
+            },
+            "ai_explanation": ai_text
         }
 
     except SyntaxError as e:
-        scores = calculate_score(logic, perf, sec, True)
-
         return {
             "status": "error",
             "syntax_error": str(e),
-            "line": e.lineno,
-            "logic": logic,
-            "performance": perf,
-            "security": sec,
-            "scores": scores,
-            "test_message": "⚠ Syntax Error Detected",
-            "ai_explanation": get_ai_explanation(code)
+            "line": e.lineno
         }
 
 
 # =========================
-# 🚀 MAIN ROUTE
+# 🚀 API ROUTE
 # =========================
 @app.post("/debug")
 def debug_code(input: CodeInput):
+    if input.language.lower() == "python":
+        return python_debug(input.code)
 
-    code = input.code.strip()
-    language = input.language.lower()
-
-    if not code:
-        return {"status": "error", "message": "Code cannot be empty"}
-
-    if language == "python":
-        return python_debug(code)
-
-    return {
-        "status": "success",
-        "message": f"{language.upper()} analyzed",
-        "test_message": "Other language support basic",
-        "scores": {"overall": 70}
-    }
+    return {"message": "Only Python supported"}
