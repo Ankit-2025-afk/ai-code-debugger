@@ -49,8 +49,10 @@ const mockResults = {
 
 // ---------- Main App ----------
 export default function App() {
+  console.log("NEW VERSION");  // 👈 ADD THIS LINE
+
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [currentPage, setCurrentPage] = useState("landing"); // landing | dashboard | new-review | results
+  const [currentPage, setCurrentPage] = useState("landing");
   const [selectedReview, setSelectedReview] = useState(null);
   const [reviewResults, setReviewResults] = useState(null);
   const [code, setCode] = useState("");
