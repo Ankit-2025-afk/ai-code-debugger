@@ -88,48 +88,43 @@ export default function App() {
 
       // 🔥 Convert backend → UI format
       const formattedResults = {
-        score: data.runtime_error ? 60 : 90,
+  score: data.runtime_error ? 60 : 90,
 
-        summary: data.ai_explanation,
+  summary: data.ai_suggestion || data.ai_explanation,
 
-        metrics: {
-          accuracy: data.runtime_error ? 60 : 90,
-          readability: 80,
-          performance: data.performance?.length ? 70 : 90,
-          bestPractices: 80,
-          security: data.security?.length ? 70 : 90,
-        },
+  metrics: data.metrics,
 
-        issues: [
-          ...(data.runtime_error
-            ? [{
-                type: "Error",
-                line: "-",
-                message: data.runtime_error
-              }]
-            : []),
+  issues: [
+    ...(data.runtime_error
+      ? [{
+          type: "Error",
+          line: "-",
+          message: data.runtime_error
+        }]
+      : []),
 
-          ...(data.logic || []).map((item) => ({
-            type: "Warning",
-            line: "-",
-            message: item
-          })),
+    ...(data.logic || []).map((item) => ({
+      type: "Warning",
+      line: "-",
+      message: item
+    })),
 
-          ...(data.performance || []).map((item) => ({
-            type: "Suggestion",
-            line: "-",
-            message: item
-          })),
+    ...(data.performance || []).map((item) => ({
+      type: "Suggestion",
+      line: "-",
+      message: item
+    })),
 
-          ...(data.security || []).map((item) => ({
-            type: "Error",
-            line: "-",
-            message: item
-          })),
-        ],
+    ...(data.security || []).map((item) => ({
+      type: "Error",
+      line: "-",
+      message: item
+    })),
+  ],
 
-        improvedCode: data.ai_explanation || "No suggestion"
-      };
+  // ✅ SHOW FULL AI RESPONSE
+  improvedCode: data.ai_suggestion || "No AI suggestion"
+};
 
       setReviewResults(formattedResults);
       setCurrentPage("results");
